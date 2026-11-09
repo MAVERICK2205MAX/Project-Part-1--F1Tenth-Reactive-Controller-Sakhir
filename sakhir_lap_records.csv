@@ -1,11 +1,2 @@
-Lap_Number,Lap_Time_s,Best_Lap_s,Status
-1,77.800,77.800,Clean
-2,77.590,77.590,Clean
-3,77.740,77.590,Clean
-4,77.740,77.590,Clean
-5,78.080,77.590,Clean
-6,77.760,77.590,Clean
-7,78.210,77.590,Clean
-8,77.670,77.590,Clean
-9,77.890,77.590,Clean
-10,77.450,77.450,Clean
+Lap_Number,Lap_Time_s,Best_Lap_s,Total_Time_s,Date_Time
+1,78.250,78.250,78.250,2026-11-09 19:44:55

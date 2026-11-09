@@ -16,6 +16,7 @@ Renders a live telemetry HUD window displaying:
 import cv2
 import numpy as np
 import time
+import math
 
 import rclpy
 from rclpy.node import Node
