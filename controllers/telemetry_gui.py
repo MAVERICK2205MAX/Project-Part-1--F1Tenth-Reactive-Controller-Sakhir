@@ -93,13 +93,14 @@ class TelemetryGUI(Node):
 
         # Current lap calculation
         cur_lap_num = min(self.completed_laps + 1, self.target_laps)
+        now_t = time.time()
         if self.current_lap_start_time is not None:
-            cur_lap_time = time.time() - self.current_lap_start_time
+            cur_lap_time = now_t - self.current_lap_start_time
         else:
             cur_lap_time = 0.0
 
         if self.sim_start_time is not None:
-            total_time = time.time() - self.sim_start_time
+            total_time = now_t - self.sim_start_time
         else:
             total_time = 0.0
 

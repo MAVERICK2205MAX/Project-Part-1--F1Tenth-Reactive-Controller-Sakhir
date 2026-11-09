@@ -327,14 +327,14 @@ class ReactiveFollowGap(Node):
 
         elapsed_lap = now_sec - self.lap_start_time
 
-        # Arm trigger when car travels away from start line
-        # Start line on Sakhir is at (0, 0)
-        if y > 15.0 or x > 15.0 or elapsed_lap > 15.0:
+        # Arm trigger ONLY after car travels into the circuit (> 25m away)
+        if math.hypot(x, y) > 25.0:
             self.is_armed = True
 
         # Finish line crossing condition:
         # Car passes from y < 0 to y >= 0 while near start line (|x| < 3.0 m)
-        if self.is_armed and self.prev_y < 0.0 and y >= 0.0 and abs(x) < 3.0:
+        # AND must be armed AND elapsed lap must be at least 15s
+        if self.is_armed and self.prev_y < 0.0 and y >= 0.0 and abs(x) < 3.0 and elapsed_lap >= 15.0:
             self.completed_laps += 1
             lap_time = elapsed_lap
             self.last_lap_time = lap_time

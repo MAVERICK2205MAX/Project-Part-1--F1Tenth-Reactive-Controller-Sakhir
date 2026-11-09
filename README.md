@@ -222,6 +222,23 @@ Project (Part 1) – F1Tenth Reactive Controller Competition/
 
 ## 4. 🚀 Execution Instructions
 
+### ⚡ Quick-Start Terminal Shortcuts
+You can control the entire project using these convenient terminal commands:
+* **`runsim`** — Launch the full simulation with RViz2, Sakhir track, Follow-The-Gap controller, and live Telemetry HUD window in one step:
+  ```bash
+  runsim
+  ```
+* **`stopsim`** — Cleanly stop and terminate all simulation nodes:
+  ```bash
+  stopsim
+  ```
+* **`test10laps`** — Run the fast headless 10-lap benchmark verification script:
+  ```bash
+  test10laps
+  ```
+
+---
+
 ### 4.1 Prerequisites
 * Ubuntu 22.04 LTS with ROS 2 Humble installed
 * F1Tenth Gym environment (`f110_gym`)
