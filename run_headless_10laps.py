@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 F1Tenth Competition Headless 10-Lap Verification Script
-Track: Sakhir | Student: Islam Qaj Mazarul (Group 2)
+Track: Sakhir | Student: ISLAM KAZI MAJHARUL (Group 2)
 
 Runs the Follow-the-Gap reactive controller for 10 complete consecutive laps
 in fast-forward simulation, verifying:
@@ -138,7 +138,7 @@ def main():
     map_path = '/home/admin1/sim_ws/src/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sakhir_map'
     print("=" * 70)
     print("  F1TENTH SAKHIR COMPETITION - 10-LAP BENCHMARK VERIFICATION")
-    print("  Student: Islam Qaj Mazarul  |  Group: Group 2  |  Track: Sakhir")
+    print("  Student: ISLAM KAZI MAJHARUL  |  Group: Group 2  |  Track: Sakhir")
     print("=" * 70)
 
     env = gym.make('f110_gym:f110-v0', map=map_path, map_ext='.png', num_agents=1)

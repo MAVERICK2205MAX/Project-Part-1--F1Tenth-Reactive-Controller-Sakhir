@@ -2,7 +2,7 @@
 """
 F1Tenth Autonomous Racing - Follow-The-Gap (FTG) Reactive Controller
 Competition Node for Track: Sakhir
-Student: Islam Qaj Mazarul (Group 2)
+Student: ISLAM KAZI MAJHARUL (Group 2)
 
 Advanced Anti-Wobble & Racing Line Enhancements:
 - 7-Point Gaussian Range Smoothing: Eliminates single-beam LiDAR quantization noise.
@@ -122,7 +122,7 @@ class ReactiveFollowGap(Node):
 
         self.get_logger().info('=' * 60)
         self.get_logger().info('  F1Tenth Anti-Wobble Follow-The-Gap Controller Initialized')
-        self.get_logger().info('  Track: Sakhir | Student: Islam Qaj Mazarul (Group 2)')
+        self.get_logger().info('  Track: Sakhir | Student: ISLAM KAZI MAJHARUL (Group 2)')
         self.get_logger().info(f'  Target Laps: {self.target_laps} | v_min: {self.v_min} m/s | v_max: {self.v_max} m/s')
         self.get_logger().info(f'  EMA Filter alpha: {self.ema_alpha} | Hazard Cone: {math.degrees(self.hazard_cone_rad):.1f}°')
         self.get_logger().info('=' * 60)
@@ -429,7 +429,7 @@ class ReactiveFollowGap(Node):
 
         marker.text = (
             f"=== SAKHIR GRAND PRIX HUD ===\n"
-            f"Driver: Islam Qaj Mazarul (Grp 2)\n"
+            f"Driver: ISLAM KAZI MAJHARUL (Grp 2)\n"
             f"Status: {status}\n"
             f"Lap: {min(self.current_lap, self.target_laps)} / {self.target_laps}\n"
             f"Current Lap: {current_lap_time:6.2f} s\n"
@@ -486,7 +486,7 @@ class ReactiveFollowGap(Node):
         avg_time = sum(self.lap_times) / len(self.lap_times) if self.lap_times else 0.0
         print("\n" + "🏆" * 32)
         print("   CHALLENGE 1 & 2 COMPLETE - 10 CONSECUTIVE LAPS!")
-        print("   Student: Islam Qaj Mazarul | Group 2 | Track: Sakhir")
+        print("   Student: ISLAM KAZI MAJHARUL | Group 2 | Track: Sakhir")
         print("🏆" * 32)
         print(f"   Completed Laps: {self.completed_laps} / {self.target_laps}")
         print(f"   Collisions:     0 (CLEAN RUN - PART A: 100/100)")

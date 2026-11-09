@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 F1Tenth Competition Live Telemetry HUD Overlay
-Track: Sakhir | Student: Islam Qaj Mazarul (Group 2)
+Track: Sakhir | Student: ISLAM KAZI MAJHARUL (Group 2)
 
 Renders a live telemetry HUD window displaying:
 - Current Lap Counter (e.g. LAP 3 / 10)
@@ -88,7 +88,7 @@ class TelemetryGUI(Node):
 
         cv2.putText(canvas, "F1TENTH SAKHIR TELEMETRY", (15, 28),
                     cv2.FONT_HERSHEY_DUPLEX, 0.75, (255, 255, 255), 2)
-        cv2.putText(canvas, "DRIVER: Islam Qaj Mazarul  |  GROUP 2", (15, 47),
+        cv2.putText(canvas, "DRIVER: ISLAM KAZI MAJHARUL  |  GROUP 2", (15, 47),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.42, (180, 220, 255), 1)
 
         # Current lap calculation

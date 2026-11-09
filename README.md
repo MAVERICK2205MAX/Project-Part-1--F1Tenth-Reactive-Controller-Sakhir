@@ -1,6 +1,6 @@
 # F1Tenth Autonomous Racing: Enhanced Follow-The-Gap (FTG) Controller
 ### Autonomous Vehicles Course — Project (Part 1): Reactive Controller Competition
-**Student Name:** Islam Qaj Mazarul  
+**Student Name:** ISLAM KAZI MAJHARUL  
 **Group:** Group 2 (Sakhir Track)  
 **Assigned Track:** Sakhir International Circuit  
 **Platform:** ROS 2 Humble & Official F1Tenth Simulator (`f110_gym`)  
@@ -24,7 +24,7 @@
 ```
 ================================================================================
   🏁 F1TENTH SAKHIR COMPETITION - 10-LAP BENCHMARK VERIFICATION
-  Driver: Islam Qaj Mazarul | Group 2 | Vehicle: F1TENTH Racecar
+  Driver: ISLAM KAZI MAJHARUL | Group 2 | Vehicle: F1TENTH Racecar
 ================================================================================
   Lap #   |   Split Time (s)   |   Status   |   Notes
 --------------------------------------------------------------------------------

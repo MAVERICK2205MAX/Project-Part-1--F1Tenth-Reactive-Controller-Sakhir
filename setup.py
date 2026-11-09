@@ -17,7 +17,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Islam Qaj Mazarul',
+    maintainer='ISLAM KAZI MAJHARUL',
     maintainer_email='student@course.edu',
     description='F1Tenth Follow-The-Gap Reactive Controller with Lap Counter and Lap Timer for Sakhir',
     license='Apache-2.0',

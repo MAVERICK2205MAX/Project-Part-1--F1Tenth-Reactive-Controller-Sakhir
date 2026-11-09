@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # F1TENTH VIDEO EVIDENCE RECORDING GUIDE
-# Track: Sakhir | Student: Islam Qaj Mazarul (Group 2)
+# Track: Sakhir | Student: ISLAM KAZI MAJHARUL (Group 2)
 # ==============================================================================
 
 echo "======================================================================"
 echo "  🎥 F1TENTH COMPETITION VIDEO RECORDING INSTRUCTIONS"
-echo "  Student: Islam Qaj Mazarul | Group 2 | Track: Sakhir"
+echo "  Student: ISLAM KAZI MAJHARUL | Group 2 | Track: Sakhir"
 echo "======================================================================"
 echo ""
 echo "Assignment Video Evidence Requirements:"

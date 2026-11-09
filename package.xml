@@ -4,7 +4,7 @@
   <name>controllers</name>
   <version>1.0.0</version>
   <description>F1Tenth Follow-The-Gap Reactive Controller with Lap Counter &amp; Lap Timer for Track Sakhir</description>
-  <maintainer email="student@course.edu">Islam Qaj Mazarul</maintainer>
+  <maintainer email="student@course.edu">ISLAM KAZI MAJHARUL</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>

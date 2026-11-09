@@ -1,7 +1,7 @@
 # 🗣️ Oral Defense Preparation Guide
 **Course:** Autonomous Vehicles  
 **Project:** F1Tenth Reactive Controller Competition (Part 1)  
-**Student:** Islam Qaj Mazarul  
+**Student:** ISLAM KAZI MAJHARUL  
 **Group:** Group 2  
 **Assigned Track:** Sakhir  
 **Algorithm:** Enhanced Anti-Wobble Follow-The-Gap (FTG) with Disparity Extender & Dynamic Speed Profiling  
