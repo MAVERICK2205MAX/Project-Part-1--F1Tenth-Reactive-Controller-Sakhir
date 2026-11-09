@@ -47,13 +47,17 @@ class ReactiveFollowGap(Node):
         self.declare_parameter('bubble_radius', 0.35)
         self.declare_parameter('bubble_hazard_cone_deg', 58.0)
         self.declare_parameter('bubble_max_dist', 1.8)
-        self.declare_parameter('max_range', 6.0)
+        self.declare_parameter('max_range', 8.0)
         self.declare_parameter('fov_deg', 72.0)
-        self.declare_parameter('v_min', 2.2)
+        self.declare_parameter('v_min', 2.0)
         self.declare_parameter('v_max', 8.0)
-        self.declare_parameter('disparity_threshold', 0.7)
-        self.declare_parameter('ema_alpha', 0.28)
-        self.declare_parameter('max_steer_rate', 0.15)
+        self.declare_parameter('disparity_threshold', 1.0)
+        self.declare_parameter('ema_alpha', 0.25)
+        self.declare_parameter('max_steer_velocity', 2.8)
+        self.declare_parameter('v_steer_base', 3.2)
+        self.declare_parameter('v_steer_pow', 0.85)
+        self.declare_parameter('d_floor', 2.0)
+        self.declare_parameter('d_range', 4.8)
         self.declare_parameter('target_laps', 10)
         self.declare_parameter('log_csv_path', 'sakhir_lap_records.csv')
 
@@ -67,7 +71,11 @@ class ReactiveFollowGap(Node):
         self.v_max = float(self.get_parameter('v_max').value)
         self.disp_thresh = float(self.get_parameter('disparity_threshold').value)
         self.ema_alpha = float(self.get_parameter('ema_alpha').value)
-        self.max_steer_rate = float(self.get_parameter('max_steer_rate').value)
+        self.max_steer_velocity = float(self.get_parameter('max_steer_velocity').value)
+        self.v_steer_base = float(self.get_parameter('v_steer_base').value)
+        self.v_steer_pow = float(self.get_parameter('v_steer_pow').value)
+        self.d_floor = float(self.get_parameter('d_floor').value)
+        self.d_range = float(self.get_parameter('d_range').value)
         self.target_laps = int(self.get_parameter('target_laps').value)
         self.log_csv_path = str(self.get_parameter('log_csv_path').value)
 
@@ -97,6 +105,7 @@ class ReactiveFollowGap(Node):
         self.prev_steer = 0.0
         self.current_speed = 0.0
         self.current_steer = 0.0
+        self.prev_scan_time = None
 
         # Lap Counter & Timer State
         self.sim_start_time = None
@@ -189,25 +198,27 @@ class ReactiveFollowGap(Node):
 
         return proc_ranges
 
-    def apply_disparity_extender(self, proc_ranges, angle_inc):
+    def apply_disparity_extender(self, proc_ranges, angle_min, min_idx, angle_inc):
         """
         Extend safety bubble around sharp range discontinuities (disparities).
-        Prevents clipping corner walls and obstacle edges.
+        Prevents clipping corner walls and obstacle edges while restricting to forward arc.
         """
         diff = np.abs(np.diff(proc_ranges))
         disparities = np.where(diff > self.disp_thresh)[0]
+        angles = angle_min + (min_idx + np.arange(len(proc_ranges))) * angle_inc
 
         for d_idx in disparities:
-            d1 = proc_ranges[d_idx]
-            d2 = proc_ranges[d_idx + 1]
-            if d1 < d2 and d1 > 0.1:
-                b_ang = math.atan2(self.bubble_radius, d1)
-                b_beams = int(b_ang / angle_inc)
-                proc_ranges[d_idx + 1:min(len(proc_ranges), d_idx + 1 + b_beams)] = 0.0
-            elif d2 < d1 and d2 > 0.1:
-                b_ang = math.atan2(self.bubble_radius, d2)
-                b_beams = int(b_ang / angle_inc)
-                proc_ranges[max(0, d_idx - b_beams):d_idx + 1] = 0.0
+            if abs(angles[d_idx]) <= math.radians(60.0):
+                d1 = proc_ranges[d_idx]
+                d2 = proc_ranges[d_idx + 1]
+                if d1 < d2 and d1 > 0.1:
+                    b_ang = math.atan2(self.bubble_radius, d1)
+                    b_beams = int(b_ang / angle_inc)
+                    proc_ranges[d_idx + 1:min(len(proc_ranges), d_idx + 1 + b_beams)] = 0.0
+                elif d2 < d1 and d2 > 0.1:
+                    b_ang = math.atan2(self.bubble_radius, d2)
+                    b_beams = int(b_ang / angle_inc)
+                    proc_ranges[max(0, d_idx - b_beams):d_idx + 1] = 0.0
 
         return proc_ranges
 
@@ -239,9 +250,8 @@ class ReactiveFollowGap(Node):
     def find_best_point(self, start_i, end_i, ranges):
         """
         Find best target index within the gap.
-        Uses the median of the deepest plateau (beams >= 92% of max gap depth)
-        combined with the geometric center of the gap.
-        Eliminates single-beam discretization wobble.
+        Uses the median of the deepest plateau combined with dynamic center weighting:
+        62% centering on open straights for anti-wobble stability, 52% in tight turns.
         """
         gap_center = (start_i + end_i) // 2
 
@@ -250,28 +260,32 @@ class ReactiveFollowGap(Node):
         near_max = np.where(sub >= max(0.92 * max_d, max_d - 0.25))[0]
         deepest_plateau = start_i + int(np.median(near_max))
 
-        # Optimal blend: 55% gap center, 45% deepest plateau center
-        target_local_idx = int(0.55 * gap_center + 0.45 * deepest_plateau)
+        mid = len(ranges) // 2
+        fwd_clearance = float(np.mean(ranges[max(0, mid - 15):min(len(ranges), mid + 15)]))
+        center_w = 0.62 if fwd_clearance > 4.0 else 0.52
+
+        target_local_idx = int(center_w * gap_center + (1.0 - center_w) * deepest_plateau)
         return target_local_idx
 
     def compute_speed(self, steer_angle, proc_ranges):
         """
-        Dynamically calculate vehicle speed:
+        Dynamically calculate vehicle speed using Anticipatory Braking:
         - Drops in sharp turns to prevent tire slippage and understeer.
         - Accelerates smoothly on open straights up to v_max.
+        - Proactively decelerates before hairpins using forward distance buffer.
         """
         steer_abs = abs(steer_angle)
         mid = len(proc_ranges) // 2
         fwd_clearance = float(np.mean(proc_ranges[max(0, mid - 15):min(len(proc_ranges), mid + 15)]))
 
-        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(24.0)))
-        dist_factor = min(1.0, max(0.0, (fwd_clearance - 1.4) / 3.0))
+        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(20.0)))
+        dist_factor = min(1.0, max(0.0, (fwd_clearance - self.d_floor) / self.d_range))
 
-        speed = self.v_min + (self.v_max - self.v_min) * (0.60 * steer_factor + 0.40 * dist_factor)
+        speed = self.v_min + (self.v_max - self.v_min) * (0.50 * steer_factor + 0.50 * dist_factor)
         return float(np.clip(speed, self.v_min, self.v_max))
 
     def lidar_callback(self, data):
-        """Process LiDAR scans, execute anti-wobble FTG, and publish drive commands."""
+        """Process LiDAR scans, execute anti-wobble FTG with speed gain scheduling, and publish drive commands."""
         angle_min = data.angle_min
         angle_inc = data.angle_increment
 
@@ -282,7 +296,7 @@ class ReactiveFollowGap(Node):
         proc_ranges = self.apply_safety_bubble(proc_ranges, min_idx, angle_min, angle_inc)
 
         # Step 4: Disparity extender for sharp obstacle edges
-        proc_ranges = self.apply_disparity_extender(proc_ranges, angle_inc)
+        proc_ranges = self.apply_disparity_extender(proc_ranges, angle_min, min_idx, angle_inc)
 
         # Step 5: Find maximum contiguous gap
         max_gap = self.find_max_gap(proc_ranges, free_threshold=0.7)
@@ -297,18 +311,36 @@ class ReactiveFollowGap(Node):
             target_global_idx = min_idx + target_local_idx
             raw_steer = angle_min + target_global_idx * angle_inc
 
-            # Exponential Moving Average (EMA) low-pass filter
-            filtered_steer = (1.0 - self.ema_alpha) * self.prev_steer + self.ema_alpha * raw_steer
+            # Preliminary speed for gain attenuation
+            prelim_speed = self.compute_speed(self.prev_steer, proc_ranges)
 
-            # Slew rate limiter to ensure smooth chassis dynamics
+            # Speed-scheduled steering gain attenuation (eliminates high-speed snaking/fishtailing)
+            if prelim_speed > self.v_steer_base:
+                gain = (self.v_steer_base / prelim_speed) ** self.v_steer_pow
+                target_steer = raw_steer * max(0.35, min(1.0, gain))
+            else:
+                target_steer = raw_steer
+
+            # Exponential Moving Average (EMA) low-pass filter
+            filtered_steer = (1.0 - self.ema_alpha) * self.prev_steer + self.ema_alpha * target_steer
+
+            # Time-normalized slew rate limiter to ensure smooth chassis dynamics
+            now_sec = self.get_clock().now().nanoseconds * 1e-9
+            if self.prev_scan_time is None:
+                dt = 0.025
+            else:
+                dt = max(0.005, min(0.1, now_sec - self.prev_scan_time))
+            self.prev_scan_time = now_sec
+
+            max_d_steer = self.max_steer_velocity * dt
             steer_angle = float(np.clip(
                 filtered_steer,
-                self.prev_steer - self.max_steer_rate,
-                self.prev_steer + self.max_steer_rate
+                self.prev_steer - max_d_steer,
+                self.prev_steer + max_d_steer
             ))
             self.prev_steer = steer_angle
 
-            # Step 7: Dynamic speed control
+            # Step 7: Dynamic speed control using final steering angle
             speed = self.compute_speed(steer_angle, proc_ranges)
 
         self.current_speed = speed
