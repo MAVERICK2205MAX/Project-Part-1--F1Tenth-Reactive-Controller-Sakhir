@@ -14,21 +14,23 @@ def generate_launch_description():
         )
     )
 
-    # Reactive Follow-The-Gap controller node
+    # Reactive Follow-The-Gap controller node (Anti-Wobble Optimized)
     gap_controller_node = Node(
         package='controllers',
         executable='gap_node',
         name='reactive_gap_controller',
         output='screen',
         parameters=[{
-            'bubble_radius': 0.40,
+            'bubble_radius': 0.35,
+            'bubble_hazard_cone_deg': 58.0,
+            'bubble_max_dist': 1.8,
             'max_range': 6.0,
-            'fov_deg': 75.0,
+            'fov_deg': 72.0,
             'v_min': 2.2,
-            'v_max': 7.5,
+            'v_max': 8.0,
             'disparity_threshold': 0.7,
-            'smoothing_kernel': 5,
-            'max_steer_rate': 0.25,
+            'ema_alpha': 0.28,
+            'max_steer_rate': 0.15,
             'target_laps': 10,
             'log_csv_path': 'sakhir_lap_records.csv'
         }]
