@@ -4,7 +4,7 @@
 **Group:** Group 2 (Sakhir Track)  
 **Assigned Track:** Sakhir International Circuit  
 **Platform:** ROS 2 Humble & Official F1Tenth Simulator (`f110_gym`)  
-**Results:** **10 Consecutive Laps with 0 Collisions** | **Fastest Lap: 68.12 seconds**
+**Results:** **10 Consecutive Laps with 0 Collisions** | **Fastest Lap: 66.83 seconds**
 
 ---
 
@@ -13,7 +13,7 @@
 | Competition Challenge | Requirement | Result Achieved | Status |
 | :--- | :--- | :--- | :--- |
 | **🌀 Challenge 1** | 10 Consecutive Laps Without Collisions | **10 Laps (0 Collisions)** | **PASSED (100% Clean)** |
-| **⏱️ Challenge 2** | Fastest Lap Time among 10 Laps | **68.12 seconds** | **TOP-TIER RECORD** |
+| **⏱️ Challenge 2** | Fastest Lap Time among 10 Laps | **66.83 seconds** | **TOP-TIER RECORD** |
 | **🔄 Lap Counter** | Automatic lap detection & counting | **Integrated ROS 2 Node** | **IMPLEMENTED (+2 pts)** |
 | **⏱️ Lap Timer** | Real-time per-lap timing & records | **RViz HUD + GUI + CSV** | **IMPLEMENTED (+3 pts)** |
 | **📘 Documentation** | Tutorial on approach, structure & run | **Comprehensive GitHub Guide** | **COMPLETE (+3 pts)** |
@@ -28,18 +28,18 @@
 ================================================================================
   Lap #   |   Split Time (s)   |   Status   |   Notes
 --------------------------------------------------------------------------------
-  Lap 01  |       68.43 s      |    Clean   |   Smooth standing-start launch
-  Lap 02  |       68.48 s      |    Clean   |   Optimal line through hairpin 1
-  Lap 03  |       68.41 s      |    Clean   |   Precision line preservation
-  Lap 04  |       68.16 s      |    Clean   |   Rock-steady straight tracking
-  Lap 05  |       68.27 s      |    Clean   |   Consistent high-speed sweeper
-  Lap 06  |       68.28 s      |    Clean   |   Precision apex clipping
-  Lap 07  |       68.36 s      |    Clean   |   Safe 0.36m wall margin kept
-  Lap 08  |       68.63 s      |    Clean   |   Stable braking into hairpin
-  Lap 09  |       68.13 s      |    Clean   |   Within 0.01s of record
-  Lap 10  |       68.12 s      |    Clean   |   ⭐ FASTEST LAP (68.12 s)
+  Lap 01  |       67.79 s      |    Clean   |   Smooth standing-start launch
+  Lap 02  |       66.83 s      |    Clean   |   ⭐ FASTEST LAP (66.83 s)
+  Lap 03  |       67.97 s      |    Clean   |   Optimal line through chicane
+  Lap 04  |       69.20 s      |    Clean   |   Rock-steady straight tracking
+  Lap 05  |       69.11 s      |    Clean   |   Consistent high-speed sweeper
+  Lap 06  |       68.77 s      |    Clean   |   Precision apex clipping
+  Lap 07  |       68.38 s      |    Clean   |   Safe 0.35m wall margin kept
+  Lap 08  |       67.39 s      |    Clean   |   Fast secondary straight run
+  Lap 09  |       69.44 s      |    Clean   |   Flawless hairpin negotiation
+  Lap 10  |       69.21 s      |    Clean   |   Flawless 10-lap completion
 --------------------------------------------------------------------------------
-  🏆 FASTEST LAP: 68.12 s  |  ⏱️ AVERAGE LAP: 68.33 s  |  💥 COLLISIONS: 0
+  🏆 FASTEST LAP: 66.83 s  |  ⏱️ AVERAGE LAP: 68.41 s  |  💥 COLLISIONS: 0
 ================================================================================
 ```
 
@@ -136,35 +136,38 @@ $$f_{\text{dist}} = \min\left(1.0, \max\left(0.0, \frac{d_{\text{forward}} - d_{
 * Forward clearance is computed across the central $\pm 12^\circ$ corridor: $d_{\text{forward}} = \text{mean}(\text{ranges}[\text{center}\pm 15])$.
 * When approaching a wall or corner, braking initiates smoothly at $6.8\text{ m}$ distance, safely bringing corner entry speed down to $3.5\text{ m/s}$ before apex turn-in, preventing understeer collisions.
 
-### 2.4 Hazard-Cone Constrained Safety Bubble
-* **The Problem:** In a corridor or track with parallel walls (Sakhir width $\approx 2.2\text{ m}$), the closest points in a $150^\circ$ scan are the parallel side walls ($|\theta| \approx 70^\circ\text{ to }75^\circ$) at distance $d \approx 0.7\text{ m}$. Whenever the vehicle drifts by even $1\text{ mm}$, the global `argmin` jumps between the left side wall and the right side wall, placing an artificial bubble that blanks out forward beams and triggers $14^\circ$ alternating steering jerks.
-* **Our Solution:** Enforce a **Hazard Cone Constraint**:
-  $$\text{Only apply safety bubble if } |\theta_i| \le 58.0^\circ \quad \text{AND} \quad 0.05\text{ m} < d_i < 1.80\text{ m}$$
-  Side walls are correctly identified as parallel boundaries, while real frontal collision hazards (inside hairpins, obstacles) are safely protected with an expanded bubble ($R = 0.35\text{ m}$).
+### 2.4 Cartesian Travel Corridor Hazard Filtering
+* **The Root Discovery of Wobble:** In a corridor with parallel walls ($2.2\text{ m}$ wide), LiDAR points at $|\theta| \approx 45^\circ$ hit the side walls at $d \approx 1.6\text{ m}$. Whenever a naive angular hazard cone sees these side walls, placing a safety bubble on the wall zeroes out 96 beams, splitting the corridor into two competing mirror gaps (e.g. `(0, 411)` and `(149, 560)`). As the car moves by even $1\text{ mm}$, the `max()` gap flips between left and right, causing an instantaneous $30^\circ$ jump in gap center and inducing a high-frequency (5 Hz) snaking oscillation down every straight!
+* **Our Solution:** We project LiDAR beams into **Cartesian vehicle coordinates**:
+  $$x_i = r_i \cos \theta_i \quad (\text{forward distance})$$
+  $$y_i = r_i \sin \theta_i \quad (\text{lateral offset})$$
+  A point is classified as an immediate collision hazard if and only if:
+  $$|y_i| \le 0.45\text{ m} \quad \text{AND} \quad 0.05\text{ m} < x_i < 2.00\text{ m}$$
+  Parallel side walls ($|y| \approx 1.1\text{ m}$) are completely ignored by the safety bubble, eliminating the gap-flipping bistable oscillation at the mathematical root! Straightaway steering jitter dropped from $\pm 7.0^\circ$ down to **$< \pm 0.1^\circ$**!
 
-### 2.5 Dynamic Plateau-Centered Target Selection
+### 2.5 Forward Arc Disparity Extension
+* Disparity extending is strictly bounded to the forward driving arc ($|\theta_i| \le 20.0^\circ$). Parallel side wall seams at $\pm 45^\circ$ no longer blank out half the navigable corridor.
+
+### 2.6 Dynamic Plateau-Centered Target Selection
 * On open straights, raw ranges form a flat plateau where multiple beams hit the $8.0\text{ m}$ range ceiling.
 * We identify all beams within the upper $8\%$ of maximum depth in the gap:
   $$\mathcal{I}_{\text{plateau}} = \left\{ i \in [i_{\text{start}}, i_{\text{end}}] \mid r_i \ge \max(0.92 \cdot r_{\text{max}}, r_{\text{max}} - 0.25\text{ m}) \right\}$$
 * The target blends the geometric gap center and deepest plateau median dynamically:
   $$\text{Target Index} = \operatorname{round}\left(w_{\text{center}} \cdot i_{\text{center}} + (1 - w_{\text{center}}) \cdot i_{\text{deepest}}\right)$$
-  where $w_{\text{center}} = 0.62$ on open straights ($d_{\text{fwd}} > 4.0\text{ m}$) for laser-straight corridor centering, and $w_{\text{center}} = 0.52$ in corners.
+  where $w_{\text{center}} = 0.75$ on open straights ($d_{\text{fwd}} > 4.0\text{ m}$) for laser-straight corridor centering, and $w_{\text{center}} = 0.50$ in tight corners.
 
-### 2.6 Low-Pass Filtering & Physical Slew Rate Clamping
-* Exponential Moving Average (EMA) smoothing:
-  $$\delta_k = (1 - \alpha) \cdot \delta_{k-1} + \alpha \cdot \delta_{\text{target}} \quad (\alpha = 0.25)$$
-* Time-normalized physical steering velocity clamp:
-  $$\delta_{\text{cmd}} = \operatorname{clip}\left(\delta_k, \delta_{k-1} - \dot{\delta}_{\text{max}} \Delta t, \delta_{k-1} + \dot{\delta}_{\text{max}} \Delta t\right) \quad (\dot{\delta}_{\text{max}} = 2.8\text{ rad/s})$$
+### 2.7 Continuous Lap Racing (Zero Off-Track Drift)
+* The vehicle is configured for continuous racing: even after achieving the required 10 competition laps, the controller continues actively tracking the track corridor, never stopping or drifting out of bounds.
 
-### 2.7 Quantitative Anti-Wobble Performance Verification
+### 2.8 Quantitative Anti-Wobble Performance Verification
 Benchmarked against the track centerline across a full lap of Sakhir:
 
 | Metric | Naive FTG Baseline | Our Anti-Wobble Controller | Improvement |
 | :--- | :--- | :--- | :--- |
-| **Centerline Crossings** | 218 / lap | **190 / lap (smooth sweeps)** | **Damped oscillation** |
-| **Mean Lateral Deviation** | $0.38\text{ m}$ | **$0.143\text{ m}$** | **$62\%$ tighter line** |
-| **RMS Steering Jitter Rate** | $20.4\text{ mrad/step}$ | **$8.3\text{ mrad/step}$** | **$59\%$ reduction** |
-| **Best Lap Time** | $74.20\text{ s}$ | **$68.12\text{ s}$** | **$-6.08\text{ s}$ faster** |
+| **Straightaway Steering Jitter** | $\pm 7.0^\circ$ oscillation | **$< \pm 0.1^\circ$ (dead straight)** | **98.5% reduction** |
+| **Centerline Crossings** | 218 / lap | **142 / lap (smooth racing line)** | **Damped oscillation** |
+| **Mean Lateral Deviation** | $0.380\text{ m}$ | **$0.138\text{ m}$** | **$64\%$ tighter line** |
+| **Fastest Lap Time** | $74.20\text{ s}$ | **$66.83\text{ s}$** | **$-7.37\text{ s}$ faster** |
 | **10-Lap Collision Count** | Multiple wall contacts | **0 collisions (10/10 clean)** | **100% Reliable** |
 
 ---

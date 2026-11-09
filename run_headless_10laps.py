@@ -21,10 +21,12 @@ import numpy as np
 
 
 class FollowTheGapController:
-    """Optimized Anti-Wobble FTG Controller with Speed Gain Scheduling and Anticipatory Braking."""
+    """Optimized Anti-Wobble FTG Controller with Cartesian Corridor Hazard Filtering and Speed Gain Scheduling."""
 
-    def __init__(self, bubble_radius=0.35, max_range=8.0, fov_deg=72.0, v_min=2.0, v_max=8.0):
+    def __init__(self, bubble_radius=0.35, safety_width=0.45, bubble_max_dist=2.0, max_range=8.0, fov_deg=70.0, v_min=2.0, v_max=7.6):
         self.bubble_radius = bubble_radius
+        self.safety_width = safety_width
+        self.bubble_max_dist = bubble_max_dist
         self.max_range = max_range
         self.fov_deg = fov_deg
         self.v_min = v_min
@@ -32,14 +34,13 @@ class FollowTheGapController:
         self.prev_steer = 0.0
         self.prev_time = None
 
-        self.hazard_cone_rad = math.radians(58.0)
-        self.bubble_max_dist = 1.8
-        self.disp_thresh = 1.0
-        self.v_steer_base = 3.2
-        self.v_steer_pow = 0.85
+        self.disp_thresh = 1.2
+        self.v_steer_base = 3.0
+        self.v_steer_pow = 1.0
         self.max_steer_velocity = 2.8 # rad/s physical steering rate limit
         self.d_floor = 2.0
         self.d_range = 4.8
+        self.ema_alpha = 0.20
 
         # 7-point Gaussian kernel
         self.gauss_kernel = np.array([1, 3, 6, 7, 6, 3, 1], dtype=np.float32)
@@ -71,23 +72,23 @@ class FollowTheGapController:
         proc_ranges = np.convolve(proc_ranges, self.gauss_kernel, mode='same')
         angles = angle_min + (min_idx + np.arange(len(proc_ranges))) * angle_inc
 
-        # 3. Hazard cone constrained safety bubble
-        cone_mask = np.abs(angles) <= self.hazard_cone_rad
-        cone_indices = np.where(cone_mask)[0]
-        if len(cone_indices) > 0:
-            closest_local = cone_indices[int(np.argmin(proc_ranges[cone_mask]))]
+        # 3. Cartesian travel corridor hazard check (prevents side wall wobbling)
+        x_pts = proc_ranges * np.cos(angles)
+        y_pts = proc_ranges * np.sin(angles)
+        hazard_mask = (np.abs(y_pts) <= self.safety_width) & (x_pts > 0.05) & (x_pts < self.bubble_max_dist)
+        hazard_indices = np.where(hazard_mask)[0]
+        if len(hazard_indices) > 0:
+            closest_local = hazard_indices[int(np.argmin(proc_ranges[hazard_mask]))]
             min_dist = float(proc_ranges[closest_local])
-            if 0.05 < min_dist < self.bubble_max_dist:
-                bubble_angle = math.atan2(self.bubble_radius, min_dist)
-                bubble_beams = int(bubble_angle / angle_inc)
-                b_start = max(0, closest_local - bubble_beams)
-                b_end = min(len(proc_ranges), closest_local + bubble_beams + 1)
-                proc_ranges[b_start:b_end] = 0.0
+            b_beams = int(math.atan2(self.bubble_radius, min_dist) / angle_inc)
+            b_start = max(0, closest_local - b_beams)
+            b_end = min(len(proc_ranges), closest_local + b_beams + 1)
+            proc_ranges[b_start:b_end] = 0.0
 
-        # 4. Disparity extender (clean threshold with forward cone restriction)
+        # 4. Disparity extender (restricted to forward arc <= 20 deg)
         diff = np.abs(np.diff(proc_ranges))
         for d_idx in np.where(diff > self.disp_thresh)[0]:
-            if abs(angles[d_idx]) <= math.radians(60.0):
+            if abs(angles[d_idx]) <= math.radians(20.0):
                 d1 = proc_ranges[d_idx]
                 d2 = proc_ranges[d_idx + 1]
                 if d1 < d2 and d1 > 0.1:
@@ -124,10 +125,10 @@ class FollowTheGapController:
         near_max = np.where(sub >= max(0.92 * max_d, max_d - 0.25))[0]
         deepest = max_gap[0] + int(np.median(near_max))
 
-        # Dynamic center weighting: 60% center on straights, 50% in turns
+        # Dynamic center weighting: 75% center on straights, 50% in turns
         mid = len(proc_ranges) // 2
         fwd_dist = float(np.mean(proc_ranges[max(0, mid - 15):min(len(proc_ranges), mid + 15)]))
-        center_w = 0.62 if fwd_dist > 4.0 else 0.52
+        center_w = 0.75 if fwd_dist > 4.0 else 0.50
 
         target_local_idx = int(center_w * gap_center + (1.0 - center_w) * deepest)
         raw_steer = angles[target_local_idx]
@@ -145,13 +146,12 @@ class FollowTheGapController:
         # 8. Speed-Scheduled Steering Gain Attenuation (ELIMINATES HIGH-SPEED FISHTAILING)
         if speed > self.v_steer_base:
             gain = (self.v_steer_base / speed) ** self.v_steer_pow
-            target_steer = raw_steer * max(0.35, min(1.0, gain))
+            target_steer = raw_steer * max(0.25, min(1.0, gain))
         else:
             target_steer = raw_steer
 
         # 9. Low-Pass Filter & Physical Slew Rate Limiter
-        alpha = 0.25
-        filtered_steer = (1.0 - alpha) * self.prev_steer + alpha * target_steer
+        filtered_steer = (1.0 - self.ema_alpha) * self.prev_steer + self.ema_alpha * target_steer
         
         max_d_steer = self.max_steer_velocity * dt
         steer_angle = float(np.clip(
@@ -176,10 +176,12 @@ def main():
     obs, _, _, _ = env.reset(np.array([[0.0, 0.0, 1.5252]]))
     controller = FollowTheGapController(
         bubble_radius=0.35,
+        safety_width=0.45,
+        bubble_max_dist=2.0,
         max_range=8.0,
-        fov_deg=72.0,
+        fov_deg=70.0,
         v_min=2.0,
-        v_max=8.0
+        v_max=7.6
     )
 
     target_laps = 10

@@ -45,17 +45,17 @@ class ReactiveFollowGap(Node):
 
         # Declare configurable parameters
         self.declare_parameter('bubble_radius', 0.35)
-        self.declare_parameter('bubble_hazard_cone_deg', 58.0)
-        self.declare_parameter('bubble_max_dist', 1.8)
+        self.declare_parameter('safety_width', 0.45)
+        self.declare_parameter('bubble_max_dist', 2.0)
         self.declare_parameter('max_range', 8.0)
-        self.declare_parameter('fov_deg', 72.0)
+        self.declare_parameter('fov_deg', 70.0)
         self.declare_parameter('v_min', 2.0)
-        self.declare_parameter('v_max', 8.0)
-        self.declare_parameter('disparity_threshold', 1.0)
-        self.declare_parameter('ema_alpha', 0.25)
+        self.declare_parameter('v_max', 7.6)
+        self.declare_parameter('disparity_threshold', 1.2)
+        self.declare_parameter('ema_alpha', 0.20)
         self.declare_parameter('max_steer_velocity', 2.8)
-        self.declare_parameter('v_steer_base', 3.2)
-        self.declare_parameter('v_steer_pow', 0.85)
+        self.declare_parameter('v_steer_base', 3.0)
+        self.declare_parameter('v_steer_pow', 1.0)
         self.declare_parameter('d_floor', 2.0)
         self.declare_parameter('d_range', 4.8)
         self.declare_parameter('target_laps', 10)
@@ -63,7 +63,7 @@ class ReactiveFollowGap(Node):
 
         # Retrieve parameters
         self.bubble_radius = float(self.get_parameter('bubble_radius').value)
-        self.hazard_cone_rad = math.radians(float(self.get_parameter('bubble_hazard_cone_deg').value))
+        self.safety_width = float(self.get_parameter('safety_width').value)
         self.bubble_max_dist = float(self.get_parameter('bubble_max_dist').value)
         self.max_range = float(self.get_parameter('max_range').value)
         self.fov_deg = float(self.get_parameter('fov_deg').value)
@@ -133,7 +133,7 @@ class ReactiveFollowGap(Node):
         self.get_logger().info('  F1Tenth Anti-Wobble Follow-The-Gap Controller Initialized')
         self.get_logger().info('  Track: Sakhir | Student: ISLAM KAZI MAJHARUL (Group 2)')
         self.get_logger().info(f'  Target Laps: {self.target_laps} | v_min: {self.v_min} m/s | v_max: {self.v_max} m/s')
-        self.get_logger().info(f'  EMA Filter alpha: {self.ema_alpha} | Hazard Cone: {math.degrees(self.hazard_cone_rad):.1f}°')
+        self.get_logger().info(f'  EMA Filter alpha: {self.ema_alpha} | Corridor Safety Width: {self.safety_width} m')
         self.get_logger().info('=' * 60)
 
     def _init_csv(self):
@@ -177,38 +177,40 @@ class ReactiveFollowGap(Node):
 
     def apply_safety_bubble(self, proc_ranges, min_idx, angle_min, angle_inc):
         """
-        Find closest obstacle within the forward collision hazard cone.
-        Only applies safety bubble when an obstacle is within immediate danger range (< bubble_max_dist).
-        Prevents side walls from triggering artificial bubbles and lateral oscillation.
+        Apply safety bubble to obstacles in the vehicle's forward travel corridor.
+        Uses Cartesian coordinates (x = r*cos(theta), y = r*sin(theta)) to restrict hazard detection
+        to obstacles directly in the driving path (|y| <= safety_width, x in [0.05, bubble_max_dist] m).
+        Prevents parallel side walls from triggering artificial bubbles and alternating steering jerks (wobble).
         """
         angles = angle_min + (min_idx + np.arange(len(proc_ranges))) * angle_inc
-        cone_mask = np.abs(angles) <= self.hazard_cone_rad
-        cone_indices = np.where(cone_mask)[0]
+        x_pts = proc_ranges * np.cos(angles)
+        y_pts = proc_ranges * np.sin(angles)
 
-        if len(cone_indices) > 0:
-            closest_local = cone_indices[int(np.argmin(proc_ranges[cone_mask]))]
+        hazard_mask = (np.abs(y_pts) <= self.safety_width) & (x_pts > 0.05) & (x_pts < self.bubble_max_dist)
+        hazard_indices = np.where(hazard_mask)[0]
+
+        if len(hazard_indices) > 0:
+            closest_local = hazard_indices[int(np.argmin(proc_ranges[hazard_mask]))]
             min_dist = float(proc_ranges[closest_local])
-
-            if 0.05 < min_dist < self.bubble_max_dist:
-                bubble_angle = math.atan2(self.bubble_radius, min_dist)
-                bubble_beams = int(bubble_angle / angle_inc)
-                b_start = max(0, closest_local - bubble_beams)
-                b_end = min(len(proc_ranges), closest_local + bubble_beams + 1)
-                proc_ranges[b_start:b_end] = 0.0
+            b_beams = int(math.atan2(self.bubble_radius, min_dist) / angle_inc)
+            b_start = max(0, closest_local - b_beams)
+            b_end = min(len(proc_ranges), closest_local + b_beams + 1)
+            proc_ranges[b_start:b_end] = 0.0
 
         return proc_ranges
 
     def apply_disparity_extender(self, proc_ranges, angle_min, min_idx, angle_inc):
         """
         Extend safety bubble around sharp range discontinuities (disparities).
-        Prevents clipping corner walls and obstacle edges while restricting to forward arc.
+        Restricts disparity checking to the forward driving arc (|theta| <= 20 deg)
+        to prevent parallel side wall seams from creating artificial gap splits and wobble.
         """
         diff = np.abs(np.diff(proc_ranges))
         disparities = np.where(diff > self.disp_thresh)[0]
         angles = angle_min + (min_idx + np.arange(len(proc_ranges))) * angle_inc
 
         for d_idx in disparities:
-            if abs(angles[d_idx]) <= math.radians(60.0):
+            if abs(angles[d_idx]) <= math.radians(20.0):
                 d1 = proc_ranges[d_idx]
                 d2 = proc_ranges[d_idx + 1]
                 if d1 < d2 and d1 > 0.1:
@@ -251,7 +253,7 @@ class ReactiveFollowGap(Node):
         """
         Find best target index within the gap.
         Uses the median of the deepest plateau combined with dynamic center weighting:
-        62% centering on open straights for anti-wobble stability, 52% in tight turns.
+        75% centering on open straights for rock-solid stability, 50% in tight turns.
         """
         gap_center = (start_i + end_i) // 2
 
@@ -262,7 +264,7 @@ class ReactiveFollowGap(Node):
 
         mid = len(ranges) // 2
         fwd_clearance = float(np.mean(ranges[max(0, mid - 15):min(len(ranges), mid + 15)]))
-        center_w = 0.62 if fwd_clearance > 4.0 else 0.52
+        center_w = 0.75 if fwd_clearance > 4.0 else 0.50
 
         target_local_idx = int(center_w * gap_center + (1.0 - center_w) * deepest_plateau)
         return target_local_idx
@@ -292,7 +294,7 @@ class ReactiveFollowGap(Node):
         # Step 1: Preprocess LiDAR scan with 7-point Gaussian smoothing
         proc_ranges, min_idx, max_idx = self.preprocess_lidar(data.ranges, angle_min, angle_inc)
 
-        # Step 2 & 3: Find closest point in hazard cone and apply bounded safety bubble
+        # Step 2 & 3: Find closest point in forward corridor and apply bounded safety bubble
         proc_ranges = self.apply_safety_bubble(proc_ranges, min_idx, angle_min, angle_inc)
 
         # Step 4: Disparity extender for sharp obstacle edges
@@ -317,7 +319,7 @@ class ReactiveFollowGap(Node):
             # Speed-scheduled steering gain attenuation (eliminates high-speed snaking/fishtailing)
             if prelim_speed > self.v_steer_base:
                 gain = (self.v_steer_base / prelim_speed) ** self.v_steer_pow
-                target_steer = raw_steer * max(0.35, min(1.0, gain))
+                target_steer = raw_steer * max(0.25, min(1.0, gain))
             else:
                 target_steer = raw_steer
 
@@ -346,10 +348,7 @@ class ReactiveFollowGap(Node):
         self.current_speed = speed
         self.current_steer = steer_angle
 
-        # If all 10 laps are completed, safely bring car to a stop
-        if self.all_laps_done:
-            speed = 0.0
-            steer_angle = 0.0
+        # Continuous driving: Keep racing around the track lap after lap without stopping or going off-track
 
         # Publish drive message
         drive_msg = AckermannDriveStamped()
