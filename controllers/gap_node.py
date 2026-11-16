@@ -29,7 +29,8 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
+from geometry_msgs.msg import Point, PoseStamped
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Float32, Int32, String
 
@@ -92,6 +93,10 @@ class ReactiveFollowGap(Node):
         self.drive_pub = self.create_publisher(AckermannDriveStamped, drive_topic, 10)
         self.hud_pub = self.create_publisher(Marker, '/lap_hud', 10)
         self.car_hud_pub = self.create_publisher(Marker, '/car_hud', 10)
+        self.ftg_hud_pub = self.create_publisher(Marker, '/ftg_hud_marker', 10)
+        self.ftg_target_pub = self.create_publisher(Marker, '/ftg_target_marker', 10)
+        self.ftg_traj_pub = self.create_publisher(Marker, '/ftg_trajectory_marker', 10)
+        self.ftg_path_pub = self.create_publisher(Path, '/ftg_path', 10)
         self.lap_count_pub = self.create_publisher(Int32, '/lap_count', 10)
         self.lap_time_pub = self.create_publisher(Float32, '/lap_time', 10)
         self.best_lap_pub = self.create_publisher(Float32, '/best_lap_time', 10)
@@ -107,7 +112,7 @@ class ReactiveFollowGap(Node):
         self.current_steer = 0.0
         self.prev_scan_time = None
 
-        # Lap Counter & Timer State
+        # Lap Counter, Timer & Distance State
         self.sim_start_time = None
         self.lap_start_time = None
         self.current_lap = 1
@@ -120,8 +125,28 @@ class ReactiveFollowGap(Node):
         self.pose_x = 0.0
         self.pose_y = 0.0
         self.total_distance = 0.0
+        self.lap_distance = 0.0
+        self.last_lap_distance = 0.0
         self.prev_pose = None
         self.all_laps_done = False
+
+        # Real-time RViz Trajectory Line & Path Data
+        self.last_traj_x = None
+        self.last_traj_y = None
+        self.traj_marker = Marker()
+        self.traj_marker.header.frame_id = 'map'
+        self.traj_marker.ns = 'ftg_trajectory'
+        self.traj_marker.id = 0
+        self.traj_marker.type = Marker.LINE_STRIP
+        self.traj_marker.action = Marker.ADD
+        self.traj_marker.scale.x = 0.12  # 12cm line width
+        self.traj_marker.color.r = 1.0   # Vibrant Orange/Gold racing line
+        self.traj_marker.color.g = 0.55
+        self.traj_marker.color.b = 0.0
+        self.traj_marker.color.a = 0.95
+
+        self.path_msg = Path()
+        self.path_msg.header.frame_id = 'map'
 
         # Status & logging timer (1 Hz terminal update)
         self.timer = self.create_timer(1.0, self.status_timer_callback)
@@ -313,6 +338,27 @@ class ReactiveFollowGap(Node):
             target_global_idx = min_idx + target_local_idx
             raw_steer = angle_min + target_global_idx * angle_inc
 
+            # Publish 3D green sphere marker at selected target point inside gap
+            target_dist = float(proc_ranges[target_local_idx])
+            target_m = Marker()
+            target_m.header.frame_id = 'ego_racecar/base_link'
+            target_m.header.stamp = self.get_clock().now().to_msg()
+            target_m.ns = 'ftg_target'
+            target_m.id = 0
+            target_m.type = Marker.SPHERE
+            target_m.action = Marker.ADD
+            target_m.pose.position.x = float(target_dist * math.cos(raw_steer))
+            target_m.pose.position.y = float(target_dist * math.sin(raw_steer))
+            target_m.pose.position.z = 0.15
+            target_m.scale.x = 0.35
+            target_m.scale.y = 0.35
+            target_m.scale.z = 0.35
+            target_m.color.r = 0.0
+            target_m.color.g = 1.0
+            target_m.color.b = 0.2
+            target_m.color.a = 0.95
+            self.ftg_target_pub.publish(target_m)
+
             # Preliminary speed for gain attenuation
             prelim_speed = self.compute_speed(self.prev_steer, proc_ranges)
 
@@ -378,11 +424,35 @@ class ReactiveFollowGap(Node):
             self.prev_y = y
             return
 
-        # Calculate distance traveled
+        # Calculate Euclidean distance traveled
         dx = x - self.prev_pose[0]
         dy = y - self.prev_pose[1]
-        self.total_distance += math.hypot(dx, dy)
+        step_dist = math.hypot(dx, dy)
+        self.total_distance += step_dist
+        self.lap_distance += step_dist
         self.prev_pose = (x, y)
+
+        # Real-Time Trajectory Rendering: Every 0.25 m of travel, append coordinates to marker and path
+        if self.last_traj_x is None or math.hypot(x - self.last_traj_x, y - self.last_traj_y) >= 0.25:
+            self.last_traj_x = x
+            self.last_traj_y = y
+            p = Point()
+            p.x = float(x)
+            p.y = float(y)
+            p.z = 0.08
+            self.traj_marker.points.append(p)
+            self.traj_marker.header.stamp = self.get_clock().now().to_msg()
+            self.ftg_traj_pub.publish(self.traj_marker)
+
+            pose = PoseStamped()
+            pose.header.stamp = self.get_clock().now().to_msg()
+            pose.header.frame_id = 'map'
+            pose.pose.position.x = float(x)
+            pose.pose.position.y = float(y)
+            pose.pose.position.z = 0.08
+            self.path_msg.header.stamp = pose.header.stamp
+            self.path_msg.poses.append(pose)
+            self.ftg_path_pub.publish(self.path_msg)
 
         elapsed_lap = now_sec - self.lap_start_time
 
@@ -398,6 +468,8 @@ class ReactiveFollowGap(Node):
             lap_time = elapsed_lap
             self.last_lap_time = lap_time
             self.lap_times.append(lap_time)
+            self.last_lap_distance = self.lap_distance
+            self.lap_distance = 0.0
 
             if lap_time < self.best_lap_time:
                 self.best_lap_time = lap_time
@@ -466,16 +538,17 @@ class ReactiveFollowGap(Node):
             f"Current Lap: {current_lap_time:6.2f} s\n"
             f"Last Lap:    {last_str}\n"
             f"Best Lap:    {best_str}\n"
+            f"Lap Dist:    {self.lap_distance:5.1f} m\n"
             f"Speed:       {self.current_speed:4.2f} m/s\n"
             f"Total Time:  {total_time:6.2f} s"
         )
         self.hud_pub.publish(marker)
 
-        # Marker 2: Floating Tag above car roof
+        # Marker 2: Floating 3D Tag above vehicle
         car_marker = Marker()
         car_marker.header.frame_id = 'ego_racecar/base_link'
         car_marker.header.stamp = self.get_clock().now().to_msg()
-        car_marker.ns = 'car_hud'
+        car_marker.ns = 'ftg_hud'
         car_marker.id = 1
         car_marker.type = Marker.TEXT_VIEW_FACING
         car_marker.action = Marker.ADD
@@ -489,9 +562,10 @@ class ReactiveFollowGap(Node):
         car_marker.color.a = 1.0
         car_marker.text = (
             f"LAP {min(self.current_lap, self.target_laps)}/{self.target_laps} | "
-            f"{current_lap_time:.1f}s | {self.current_speed:.1f} m/s"
+            f"{current_lap_time:.1f}s | {self.current_speed:.1f} m/s | {self.lap_distance:.0f}m"
         )
         self.car_hud_pub.publish(car_marker)
+        self.ftg_hud_pub.publish(car_marker)
 
         # Publish stats string
         stats_str = (
