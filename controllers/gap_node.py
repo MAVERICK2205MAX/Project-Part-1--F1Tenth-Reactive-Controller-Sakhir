@@ -508,43 +508,10 @@ class ReactiveFollowGap(Node):
 
         current_lap_time = now_sec - self.lap_start_time
         total_time = now_sec - self.sim_start_time
-
-        # Marker 1: Fixed track-side Finish Line Board (at x=2, y=0, z=4.0)
-        marker = Marker()
-        marker.header.frame_id = 'map'
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = 'lap_hud'
-        marker.id = 0
-        marker.type = Marker.TEXT_VIEW_FACING
-        marker.action = Marker.ADD
-        marker.pose.position.x = 2.0
-        marker.pose.position.y = 0.0
-        marker.pose.position.z = 4.0
-        marker.scale.z = 1.5  # text height
-        marker.color.r = 1.0
-        marker.color.g = 0.9
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-
         best_str = f'{self.best_lap_time:.2f} s' if self.best_lap_time != float('inf') else '---'
         last_str = f'{self.last_lap_time:.2f} s' if self.last_lap_time > 0 else '---'
-        status = 'COMPLETED 10 LAPS!' if self.all_laps_done else 'RACING'
 
-        marker.text = (
-            f"=== SAKHIR GRAND PRIX HUD ===\n"
-            f"Driver: ISLAM KAZI MAJHARUL (Grp 2)\n"
-            f"Status: {status}\n"
-            f"Lap: {min(self.current_lap, self.target_laps)} / {self.target_laps}\n"
-            f"Current Lap: {current_lap_time:6.2f} s\n"
-            f"Last Lap:    {last_str}\n"
-            f"Best Lap:    {best_str}\n"
-            f"Lap Dist:    {self.lap_distance:5.1f} m\n"
-            f"Speed:       {self.current_speed:4.2f} m/s\n"
-            f"Total Time:  {total_time:6.2f} s"
-        )
-        self.hud_pub.publish(marker)
-
-        # Marker 2: Floating 3D Tag above vehicle
+        # Floating 3D Tag above vehicle (compact & tracks with car)
         car_marker = Marker()
         car_marker.header.frame_id = 'ego_racecar/base_link'
         car_marker.header.stamp = self.get_clock().now().to_msg()
