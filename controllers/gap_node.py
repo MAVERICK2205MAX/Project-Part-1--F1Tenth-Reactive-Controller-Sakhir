@@ -97,6 +97,7 @@ class ReactiveFollowGap(Node):
         self.ftg_target_pub = self.create_publisher(Marker, '/ftg_target_marker', 10)
         self.ftg_traj_pub = self.create_publisher(Marker, '/ftg_trajectory_marker', 10)
         self.ftg_path_pub = self.create_publisher(Path, '/ftg_path', 10)
+        self.initialpose_pub = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
         self.lap_count_pub = self.create_publisher(Int32, '/lap_count', 10)
         self.lap_time_pub = self.create_publisher(Float32, '/lap_time', 10)
         self.best_lap_pub = self.create_publisher(Float32, '/best_lap_time', 10)
@@ -150,6 +151,11 @@ class ReactiveFollowGap(Node):
 
         # Status & logging timer (1 Hz terminal update)
         self.timer = self.create_timer(1.0, self.status_timer_callback)
+
+        # Clear any existing trajectory marker from RViz
+        del_m = Marker()
+        del_m.action = Marker.DELETEALL
+        self.ftg_traj_pub.publish(del_m)
 
         # Initialize CSV log file
         self._init_csv()
@@ -296,8 +302,8 @@ class ReactiveFollowGap(Node):
 
     def compute_speed(self, steer_angle, proc_ranges):
         """
-        Dynamically calculate vehicle speed using Anticipatory Braking:
-        - Drops in sharp turns to prevent tire slippage and understeer.
+        Dynamically calculate vehicle speed using Anticipatory Multiplicative Braking:
+        - Drops safely in sharp turns to prevent tire saturation and outer wall collision.
         - Accelerates smoothly on open straights up to v_max.
         - Proactively decelerates before hairpins using forward distance buffer.
         """
@@ -305,10 +311,11 @@ class ReactiveFollowGap(Node):
         mid = len(proc_ranges) // 2
         fwd_clearance = float(np.mean(proc_ranges[max(0, mid - 15):min(len(proc_ranges), mid + 15)]))
 
-        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(20.0)))
+        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(22.0)))
         dist_factor = min(1.0, max(0.0, (fwd_clearance - self.d_floor) / self.d_range))
 
-        speed = self.v_min + (self.v_max - self.v_min) * (0.50 * steer_factor + 0.50 * dist_factor)
+        combined_factor = min(steer_factor, dist_factor)
+        speed = self.v_min + (self.v_max - self.v_min) * (combined_factor ** 1.2)
         return float(np.clip(speed, self.v_min, self.v_max))
 
     def lidar_callback(self, data):
@@ -359,13 +366,15 @@ class ReactiveFollowGap(Node):
             target_m.color.a = 0.95
             self.ftg_target_pub.publish(target_m)
 
-            # Preliminary speed for gain attenuation
-            prelim_speed = self.compute_speed(self.prev_steer, proc_ranges)
+            # Preliminary speed for gain attenuation calculated from prospective raw_steer
+            prelim_speed = self.compute_speed(raw_steer, proc_ranges)
 
-            # Speed-scheduled steering gain attenuation (eliminates high-speed snaking/fishtailing)
-            if prelim_speed > self.v_steer_base:
+            # Speed-scheduled steering gain attenuation:
+            # ONLY damp small micro-steering noise on straights (|raw_steer| < 8 deg)
+            # In corners (|raw_steer| >= 8 deg), provide 100% full steering authority!
+            if prelim_speed > self.v_steer_base and abs(raw_steer) < math.radians(8.0):
                 gain = (self.v_steer_base / prelim_speed) ** self.v_steer_pow
-                target_steer = raw_steer * max(0.25, min(1.0, gain))
+                target_steer = raw_steer * max(0.40, min(1.0, gain))
             else:
                 target_steer = raw_steer
 
@@ -432,27 +441,26 @@ class ReactiveFollowGap(Node):
         self.lap_distance += step_dist
         self.prev_pose = (x, y)
 
-        # Real-Time Trajectory Rendering: Every 0.25 m of travel, append coordinates to marker and path
+        # Circuit Boundary Watchdog:
+        # Sakhir track coordinate envelope: x in [-25.0, 85.0], y in [-45.0, 65.0]
+        # If car ever breaches circuit boundary into the void, immediately reset to start line
+        if x < -25.0 or x > 85.0 or y < -45.0 or y > 65.0:
+            self.get_logger().warn(f'[SAFETY] Car breached circuit boundary at ({x:.1f}, {y:.1f})! Resetting...')
+            reset_pose = PoseWithCovarianceStamped()
+            reset_pose.header.stamp = self.get_clock().now().to_msg()
+            reset_pose.header.frame_id = 'map'
+            reset_pose.pose.pose.position.x = 0.0
+            reset_pose.pose.pose.position.y = 0.0
+            reset_pose.pose.pose.orientation.w = 1.0
+            self.initialpose_pub.publish(reset_pose)
+            self.lap_start_time = now_sec
+            self.is_armed = False
+            return
+
+        # Trajectory line rendering disabled for a clean, distraction-free view
         if self.last_traj_x is None or math.hypot(x - self.last_traj_x, y - self.last_traj_y) >= 0.25:
             self.last_traj_x = x
             self.last_traj_y = y
-            p = Point()
-            p.x = float(x)
-            p.y = float(y)
-            p.z = 0.08
-            self.traj_marker.points.append(p)
-            self.traj_marker.header.stamp = self.get_clock().now().to_msg()
-            self.ftg_traj_pub.publish(self.traj_marker)
-
-            pose = PoseStamped()
-            pose.header.stamp = self.get_clock().now().to_msg()
-            pose.header.frame_id = 'map'
-            pose.pose.position.x = float(x)
-            pose.pose.position.y = float(y)
-            pose.pose.position.z = 0.08
-            self.path_msg.header.stamp = pose.header.stamp
-            self.path_msg.poses.append(pose)
-            self.ftg_path_pub.publish(self.path_msg)
 
         elapsed_lap = now_sec - self.lap_start_time
 
