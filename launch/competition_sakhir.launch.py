@@ -27,7 +27,7 @@ def generate_launch_description():
             'max_range': 8.0,
             'fov_deg': 70.0,
             'v_min': 2.6,
-            'v_max': 7.4,
+            'v_max': 7.8,
             'disparity_threshold': 1.0,
             'ema_alpha': 0.40,
             'max_steer_velocity': 5.2,
@@ -36,7 +36,7 @@ def generate_launch_description():
             'd_floor': 2.0,
             'd_range': 4.8,
             'target_laps': 10,
-            'log_csv_path': 'sakhir_lap_records.csv'
+            'log_csv_path': '/home/admin1/Documents/Project (Part 1) – F1Tenth Reactive Controller Competition/sakhir_lap_records.csv'
         }]
     )
 

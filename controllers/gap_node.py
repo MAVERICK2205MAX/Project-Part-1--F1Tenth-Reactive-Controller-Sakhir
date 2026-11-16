@@ -51,7 +51,7 @@ class ReactiveFollowGap(Node):
         self.declare_parameter('max_range', 8.0)
         self.declare_parameter('fov_deg', 70.0)
         self.declare_parameter('v_min', 2.6)
-        self.declare_parameter('v_max', 7.4)
+        self.declare_parameter('v_max', 7.8)
         self.declare_parameter('disparity_threshold', 1.0)
         self.declare_parameter('ema_alpha', 0.40)
         self.declare_parameter('max_steer_velocity', 5.2)
@@ -60,7 +60,7 @@ class ReactiveFollowGap(Node):
         self.declare_parameter('d_floor', 2.0)
         self.declare_parameter('d_range', 4.8)
         self.declare_parameter('target_laps', 10)
-        self.declare_parameter('log_csv_path', 'sakhir_lap_records.csv')
+        self.declare_parameter('log_csv_path', '/home/admin1/Documents/Project (Part 1) – F1Tenth Reactive Controller Competition/sakhir_lap_records.csv')
 
         # Retrieve parameters
         self.bubble_radius = float(self.get_parameter('bubble_radius').value)
@@ -404,10 +404,20 @@ class ReactiveFollowGap(Node):
             # Step 7: Dynamic speed control using final steering angle
             speed = self.compute_speed(steer_angle, proc_ranges)
 
+        # Stop vehicle completely once target laps (10 laps) are reached
+        if self.all_laps_done or self.completed_laps >= self.target_laps:
+            self.current_speed = 0.0
+            self.current_steer = 0.0
+            stop_msg = AckermannDriveStamped()
+            stop_msg.header.stamp = self.get_clock().now().to_msg()
+            stop_msg.header.frame_id = 'base_link'
+            stop_msg.drive.steering_angle = 0.0
+            stop_msg.drive.speed = 0.0
+            self.drive_pub.publish(stop_msg)
+            return
+
         self.current_speed = speed
         self.current_steer = steer_angle
-
-        # Continuous driving: Keep racing around the track lap after lap without stopping or going off-track
 
         # Publish drive message
         drive_msg = AckermannDriveStamped()
@@ -507,6 +517,13 @@ class ReactiveFollowGap(Node):
             if self.completed_laps >= self.target_laps:
                 self.all_laps_done = True
                 self._print_final_summary()
+                # Publish immediate stop command to park vehicle at finish line
+                stop_msg = AckermannDriveStamped()
+                stop_msg.header.stamp = self.get_clock().now().to_msg()
+                stop_msg.header.frame_id = 'base_link'
+                stop_msg.drive.steering_angle = 0.0
+                stop_msg.drive.speed = 0.0
+                self.drive_pub.publish(stop_msg)
 
         self.prev_y = y
 
@@ -539,10 +556,19 @@ class ReactiveFollowGap(Node):
         car_marker.color.g = 1.0
         car_marker.color.b = 0.3
         car_marker.color.a = 1.0
-        car_marker.text = (
-            f"LAP {min(self.current_lap, self.target_laps)}/{self.target_laps} | "
-            f"{current_lap_time:.1f}s | {self.current_speed:.1f} m/s | {self.lap_distance:.0f}m"
-        )
+        if self.all_laps_done or self.completed_laps >= self.target_laps:
+            car_marker.color.r = 0.0
+            car_marker.color.g = 1.0
+            car_marker.color.b = 0.5
+            car_marker.text = f"FINISH - {self.completed_laps}/{self.target_laps} LAPS (PARKED) | BEST: {best_str} | TOTAL: {total_time:.1f}s"
+        else:
+            car_marker.color.r = 0.2
+            car_marker.color.g = 1.0
+            car_marker.color.b = 0.3
+            car_marker.text = (
+                f"LAP {min(self.current_lap, self.target_laps)}/{self.target_laps} | "
+                f"{current_lap_time:.1f}s | {self.current_speed:.1f} m/s | {self.lap_distance:.0f}m"
+            )
         self.car_hud_pub.publish(car_marker)
         self.ftg_hud_pub.publish(car_marker)
 
