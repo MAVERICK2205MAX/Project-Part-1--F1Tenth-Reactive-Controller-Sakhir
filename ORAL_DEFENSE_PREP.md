@@ -6,7 +6,9 @@
 **Group:** Group 2  
 **Assigned Track:** Sakhir  
 **Algorithm:** Enhanced Anti-Wobble Follow-The-Gap (FTG) with Speed-Scheduled Steering Gain & Anticipatory Braking  
-**Result:** 10 Consecutive Laps Completed | 0 Collisions | Fastest Lap: **41.39 s** (Target: 40–45 s) | Auto-Park at Lap 10
+**Result:** 10 Consecutive Laps Completed | 0 Collisions | Fastest Lap: **41.39 s** (Target: 40–45 s) | Auto-Park at Lap 10  
+**GitHub Repository:** [MAVERICK2205MAX/Project-Part-1--F1Tenth-Reactive-Controller-Sakhir](https://github.com/MAVERICK2205MAX/Project-Part-1--F1Tenth-Reactive-Controller-Sakhir)  
+**Video Demonstration:** [YouTube (10 Laps Clean & Telemetry HUD)](https://youtu.be/AMUUZBgnnIc)
 
 ---
 

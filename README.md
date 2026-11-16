@@ -328,10 +328,11 @@ stopsim
 
 ### 🎥 Video Evidence — Demonstration and Key Aspects
 
+[![Watch the Full 10-Lap Sakhir Demonstration Video](https://img.youtube.com/vi/AMUUZBgnnIc/maxresdefault.jpg)](https://youtu.be/AMUUZBgnnIc)
+
 > [!IMPORTANT]
-> **Video Demonstration Link:**  
-> 🔗 **[Watch the Full 10-Lap Sakhir Demonstration Video on YouTube](https://youtu.be/YOUR_VIDEO_LINK_HERE)**  
-> *(Replace `YOUR_VIDEO_LINK_HERE` with your YouTube video URL once uploaded)*
+> **Official Video Demonstration Link:**  
+> 🔗 **[Watch the Full 10-Lap Sakhir Demonstration Video on YouTube](https://youtu.be/AMUUZBgnnIc)** (`https://youtu.be/AMUUZBgnnIc`)
 
 #### Detailed Explanation of Key Aspects Shown in the Video:
 
