@@ -17,10 +17,11 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='ISLAM KAZI MAJHARUL',
+    maintainer='ISLAM KAZI MAJHARUL, Winter Delgado (widegonz)',
     maintainer_email='student@course.edu',
+    author='ISLAM KAZI MAJHARUL, Winter Delgado (widegonz)',
     description='F1Tenth Follow-The-Gap Reactive Controller with Lap Counter and Lap Timer for Sakhir',
-    license='Apache-2.0',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

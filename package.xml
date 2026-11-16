@@ -5,7 +5,9 @@
   <version>1.0.0</version>
   <description>F1Tenth Follow-The-Gap Reactive Controller with Lap Counter &amp; Lap Timer for Track Sakhir</description>
   <maintainer email="student@course.edu">ISLAM KAZI MAJHARUL</maintainer>
-  <license>Apache-2.0</license>
+  <author email="student@course.edu">ISLAM KAZI MAJHARUL</author>
+  <author email="winterdelgado@users.noreply.github.com">Winter Delgado (widegonz)</author>
+  <license>MIT</license>
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>

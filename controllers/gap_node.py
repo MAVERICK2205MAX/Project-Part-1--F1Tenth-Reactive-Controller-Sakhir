@@ -169,16 +169,20 @@ class ReactiveFollowGap(Node):
         self.get_logger().info('=' * 60)
 
     def _init_csv(self):
-        """Initialize CSV log file with header."""
+        """Initialize CSV log file with header if not present."""
         try:
-            with open(self.log_csv_path, 'w') as f:
-                f.write('Lap_Number,Lap_Time_s,Best_Lap_s,Total_Time_s,Date_Time\n')
+            if not os.path.exists(self.log_csv_path) or os.path.getsize(self.log_csv_path) == 0:
+                with open(self.log_csv_path, 'w') as f:
+                    f.write('Lap_Number,Lap_Time_s,Best_Lap_s,Total_Time_s,Date_Time\n')
         except Exception as e:
             self.get_logger().warn(f'Could not initialize CSV file: {e}')
 
     def _log_lap_to_csv(self, lap_num, lap_time, best_time, total_time):
         """Append completed lap record to CSV log."""
         try:
+            if lap_num == 1:
+                with open(self.log_csv_path, 'w') as f:
+                    f.write('Lap_Number,Lap_Time_s,Best_Lap_s,Total_Time_s,Date_Time\n')
             timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
             with open(self.log_csv_path, 'a') as f:
                 f.write(f'{lap_num},{lap_time:.3f},{best_time:.3f},{total_time:.3f},{timestamp}\n')

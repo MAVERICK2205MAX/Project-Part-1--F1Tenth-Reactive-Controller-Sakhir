@@ -4,11 +4,14 @@
 [![Python](https://img.shields.io/badge/PYTHON-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![F1TENTH](https://img.shields.io/badge/F1TENTH-GYM_ROS-EE3124?style=for-the-badge)](https://github.com/f1tenth/f1tenth_gym_ros)
 [![VALIDATION](https://img.shields.io/badge/VALIDATION-10_COLLISION--FREE_LAPS-2E7D32?style=for-the-badge)](sakhir_lap_records.csv)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-- **Author:** ISLAM KAZI MAJHARUL
+- **Driver & Lead Developer:** [ISLAM KAZI MAJHARUL](https://github.com/MAVERICK2205MAX) (Group 2)
+- **Contributors:** Winter Delgado ([@widegonz](https://github.com/widegonz))
 - **Course:** Autonomous Vehicles — II PAO 2026
 - **Assessment:** First Midterm Project (Part 1) — Reactive Controllers Competition
 - **Assigned Track:** Sakhir (Group 2)
+- **Repository Visibility:** Public & Open Source for All Time ([MIT License](LICENSE))
 
 ---
 
@@ -23,6 +26,7 @@
 7. [Hyperparameter Table and Tuning Strategy](#7-hyperparameter-table-and-tuning-strategy)
 8. [Installation, Configuration, and Execution Instructions](#8-installation-configuration-and-execution-instructions)
 9. [Experimental Results, Lap Distance, and Video Evidence](#9-experimental-results-lap-distance-and-video-evidence)
+10. [Contributors and Project Authorship](#10-contributors-and-project-authorship)
 
 ---
 
@@ -297,28 +301,28 @@ stopsim
 | Evaluation Metric | Recorded Value | Status |
 | :--- | :---: | :---: |
 | **Test 1 — Consecutive Collision-Free Laps** | **10 / 10 laps** | ✅ **Completed (0 Collisions)** |
-| **Test 2 — Fastest Lap Time** | **41.335 s** (Target: 40–45 s) | ✅ **Completed (Top-Tier)** |
-| **Average Lap Time (10 Laps)** | **41.521 s** | ✅ **Verified (Steady-State)** |
+| **Test 2 — Fastest Lap Time** | **41.395 s** (Target: 40–45 s) | ✅ **Completed (Top-Tier)** |
+| **Average Lap Time (10 Laps)** | **41.559 s** | ✅ **Verified (Steady-State)** |
 | **Distance Traveled per Lap (Racing Line)** | **$\approx 475.2\text{ m / lap}$** (measured via `/ego_racecar/odom`) | ✅ **Verified** |
 | **Peak Velocity on Main Straight** | **$8.3\text{ m/s}$** | ✅ **Verified** |
 | **Automatic Parking Stop** | **Speed $0.0\text{ m/s}$ at Finish Line after Lap 10** | ✅ **Verified** |
 | **Live Telemetry GUI** | **10-Row Scrollable HUD (`telemetry_gui`)** | ✅ **Verified** |
 
-### Complete 10-Lap Split Record
+### Complete 10-Lap Split Record (Official Benchmark)
 
 | Lap # | Lap Time (s) | Best Lap Time (s) | Delta to Best (s) | Collision Status |
 | :---: | :---: | :---: | :---: | :---: |
-| **Lap 01** | 41.640 s | 41.640 s | +0.305 s | ✅ Clean (Standing start) |
-| **Lap 02** | 41.620 s | 41.620 s | +0.285 s | ✅ Clean (Flying lap) |
-| **Lap 03** | 41.364 s | 41.364 s | +0.029 s | ✅ Clean (Chicane rhythm) |
-| **Lap 04** | 41.620 s | 41.364 s | +0.285 s | ✅ Clean (Stable straight) |
-| **Lap 05** | 41.496 s | 41.364 s | +0.161 s | ✅ Clean (High-speed sweeper) |
-| **Lap 06** | 41.388 s | 41.364 s | +0.053 s | ✅ Clean (Precision apex) |
-| **Lap 07** | 41.436 s | 41.364 s | +0.101 s | ✅ Clean (0.35m safety margin) |
-| **Lap 08** | 41.689 s | 41.364 s | +0.354 s | ✅ Clean (Fast secondary straight) |
-| **Lap 09** | **41.335 s** | **41.335 s** | **0.000 s** | 🏆 **FASTEST LAP** |
-| **Lap 10** | 41.620 s | 41.335 s | +0.285 s | 🏁 Clean (Auto-Parked at Stop) |
-| **Average** | **41.521 s** | **Total Elapsed: 415.208 s** | — | **0 Collisions** |
+| **Lap 01** | 41.881 s | 41.881 s | +0.486 s | ✅ Clean (Standing start) |
+| **Lap 02** | 41.528 s | 41.528 s | +0.133 s | ✅ Clean (Flying lap) |
+| **Lap 03** | 41.404 s | 41.404 s | +0.009 s | ✅ Clean (Chicane rhythm) |
+| **Lap 04** | 41.612 s | 41.404 s | +0.217 s | ✅ Clean (Stable straight) |
+| **Lap 05** | 41.788 s | 41.404 s | +0.393 s | ✅ Clean (High-speed sweeper) |
+| **Lap 06** | 41.451 s | 41.404 s | +0.056 s | ✅ Clean (Precision apex) |
+| **Lap 07** | 41.396 s | 41.396 s | +0.001 s | ✅ Clean (0.35m safety margin) |
+| **Lap 08** | 41.492 s | 41.395 s | +0.097 s | ✅ Clean (Fast secondary straight) |
+| **Lap 09** | **41.395 s** | **41.395 s** | **0.000 s** | 🏆 **FASTEST LAP** |
+| **Lap 10** | 41.636 s | 41.395 s | +0.241 s | 🏁 Clean (Auto-Parked at Stop) |
+| **Average** | **41.559 s** | **Total Elapsed: 415.585 s** | — | **0 Collisions** |
 
 ---
 
@@ -343,3 +347,17 @@ stopsim
    When approaching tight corners and chicanes, the vehicle smoothly decelerates from $7.6\text{ m/s}$ down to $2.0\text{ m/s}$ based on forward range clearance ($f_{\text{dist}}$), while the disparity extender prevents the car from clipping inner wall corners.
 6. **Autonomous 10-Lap Mission Stop & Park:**  
    Upon completing Lap 10, the controller immediately engages the parking stop state, issuing $0.0\text{ m/s}$ speed and $0.0\text{ rad}$ steering commands to park cleanly at the finish line. The live HUD confirms completion: `FINISH (10 LAPS PARKED)`.
+
+---
+
+## 10. Contributors and Project Authorship
+
+This repository is maintained and authored by:
+
+- **Lead Developer & Driver:** [ISLAM KAZI MAJHARUL](https://github.com/MAVERICK2205MAX)
+  - Autonomous Systems Architecture, Anti-Wobble FTG Algorithm, ROS 2 Controller Implementation, Precision Telemetry & Lap Timing System.
+- **Contributor:** Winter Delgado ([@widegonz](https://github.com/widegonz))
+  - Collaborative development, controller testing, parameter optimization, and open-source contributions.
+
+### 🌐 Public & Permanent Availability Statement
+This repository is configured as **Public** and released under the permissive [MIT License](LICENSE), ensuring permanent open-source access, reproducibility, and academic reference for students, researchers, and autonomous vehicle practitioners worldwide.
