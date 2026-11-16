@@ -45,17 +45,17 @@ class ReactiveFollowGap(Node):
         super().__init__('reactive_node')
 
         # Declare configurable parameters
-        self.declare_parameter('bubble_radius', 0.35)
+        self.declare_parameter('bubble_radius', 0.40)
         self.declare_parameter('safety_width', 0.45)
-        self.declare_parameter('bubble_max_dist', 2.0)
+        self.declare_parameter('bubble_max_dist', 3.5)
         self.declare_parameter('max_range', 8.0)
         self.declare_parameter('fov_deg', 70.0)
-        self.declare_parameter('v_min', 2.0)
-        self.declare_parameter('v_max', 7.6)
-        self.declare_parameter('disparity_threshold', 1.2)
-        self.declare_parameter('ema_alpha', 0.22)
-        self.declare_parameter('max_steer_velocity', 5.6)
-        self.declare_parameter('v_steer_base', 3.0)
+        self.declare_parameter('v_min', 2.6)
+        self.declare_parameter('v_max', 7.4)
+        self.declare_parameter('disparity_threshold', 1.0)
+        self.declare_parameter('ema_alpha', 0.40)
+        self.declare_parameter('max_steer_velocity', 5.2)
+        self.declare_parameter('v_steer_base', 5.0)
         self.declare_parameter('v_steer_pow', 1.0)
         self.declare_parameter('d_floor', 2.0)
         self.declare_parameter('d_range', 4.8)
@@ -241,7 +241,7 @@ class ReactiveFollowGap(Node):
         angles = angle_min + (min_idx + np.arange(len(proc_ranges))) * angle_inc
 
         for d_idx in disparities:
-            if abs(angles[d_idx]) <= math.radians(20.0):
+            if abs(angles[d_idx]) <= math.radians(50.0):
                 d1 = proc_ranges[d_idx]
                 d2 = proc_ranges[d_idx + 1]
                 if d1 < d2 and d1 > 0.1:
@@ -255,7 +255,7 @@ class ReactiveFollowGap(Node):
 
         return proc_ranges
 
-    def find_max_gap(self, free_space_ranges, free_threshold=0.7):
+    def find_max_gap(self, free_space_ranges, free_threshold=0.8):
         """
         Return the start index & end index of the maximum contiguous free gap.
         """
@@ -284,38 +284,43 @@ class ReactiveFollowGap(Node):
         """
         Find best target index within the gap.
         Uses the median of the deepest plateau combined with dynamic center weighting:
-        75% centering on open straights for rock-solid stability, 50% in tight turns.
+        75% road depth tracking for natural corner apex entry, 25% gap centering.
         """
         gap_center = (start_i + end_i) // 2
 
         sub = ranges[start_i:end_i + 1]
         max_d = np.max(sub)
-        near_max = np.where(sub >= max(0.92 * max_d, max_d - 0.25))[0]
+        near_max = np.where(sub >= max(0.90 * max_d, max_d - 0.30))[0]
         deepest_plateau = start_i + int(np.median(near_max))
 
-        mid = len(ranges) // 2
-        fwd_clearance = float(np.mean(ranges[max(0, mid - 15):min(len(ranges), mid + 15)]))
-        center_w = 0.75 if fwd_clearance > 4.0 else 0.50
-
-        target_local_idx = int(center_w * gap_center + (1.0 - center_w) * deepest_plateau)
+        target_local_idx = int(0.25 * gap_center + 0.75 * deepest_plateau)
         return target_local_idx
 
     def compute_speed(self, steer_angle, proc_ranges):
         """
-        Dynamically calculate vehicle speed using Anticipatory Multiplicative Braking:
+        Dynamically calculate vehicle speed using Anticipatory Curvature & Proximity Braking:
         - Drops safely in sharp turns to prevent tire saturation and outer wall collision.
         - Accelerates smoothly on open straights up to v_max.
         - Proactively decelerates before hairpins using forward distance buffer.
         """
         steer_abs = abs(steer_angle)
         mid = len(proc_ranges) // 2
-        fwd_clearance = float(np.mean(proc_ranges[max(0, mid - 15):min(len(proc_ranges), mid + 15)]))
 
-        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(22.0)))
-        dist_factor = min(1.0, max(0.0, (fwd_clearance - self.d_floor) / self.d_range))
+        # Forward clearance: 15th percentile in the central 35-degree driving arc
+        arc_half = int(math.radians(18.0) / 0.00435)
+        fwd_window = proc_ranges[max(0, mid - arc_half):min(len(proc_ranges), mid + arc_half)]
+        fwd_clearance = float(np.percentile(fwd_window, 15)) if len(fwd_window) > 0 else 3.0
 
-        combined_factor = min(steer_factor, dist_factor)
-        speed = self.v_min + (self.v_max - self.v_min) * (combined_factor ** 1.2)
+        # Anticipatory braking on steering angle
+        steer_factor = max(0.0, 1.0 - (steer_abs / math.radians(22.0))) ** 1.3
+        v_steer = self.v_min + (self.v_max - self.v_min) * steer_factor
+
+        # Distance braking: slow down if wall is approaching in driving path
+        dist_factor = np.clip((fwd_clearance - 2.0) / 4.0, 0.0, 1.0) ** 1.1
+        v_dist = self.v_min + (self.v_max - self.v_min) * dist_factor
+
+        # Minimum blend ensures both curvature and obstacles are respected
+        speed = min(v_steer, v_dist)
         return float(np.clip(speed, self.v_min, self.v_max))
 
     def lidar_callback(self, data):
@@ -369,12 +374,11 @@ class ReactiveFollowGap(Node):
             # Preliminary speed for gain attenuation calculated from prospective raw_steer
             prelim_speed = self.compute_speed(raw_steer, proc_ranges)
 
-            # Speed-scheduled steering gain attenuation:
-            # ONLY damp small micro-steering noise on straights (|raw_steer| < 8 deg)
-            # In corners (|raw_steer| >= 8 deg), provide 100% full steering authority!
-            if prelim_speed > self.v_steer_base and abs(raw_steer) < math.radians(8.0):
-                gain = (self.v_steer_base / prelim_speed) ** self.v_steer_pow
-                target_steer = raw_steer * max(0.40, min(1.0, gain))
+            # Straight-line anti-wobble attenuation:
+            # ONLY damp tiny jitter on straights (|raw_steer| < 5 deg) at high speed
+            # Full steering authority when turning into corners
+            if abs(raw_steer) < math.radians(5.0) and prelim_speed > 5.0:
+                target_steer = raw_steer * (5.0 / prelim_speed)
             else:
                 target_steer = raw_steer
 
