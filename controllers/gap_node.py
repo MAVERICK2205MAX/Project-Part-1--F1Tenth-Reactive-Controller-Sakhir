@@ -442,9 +442,9 @@ class ReactiveFollowGap(Node):
         self.prev_pose = (x, y)
 
         # Circuit Boundary Watchdog:
-        # Sakhir track coordinate envelope: x in [-25.0, 85.0], y in [-45.0, 65.0]
+        # Sakhir track coordinate envelope: x in [-30.0, 92.0], y in [-50.0, 72.0]
         # If car ever breaches circuit boundary into the void, immediately reset to start line
-        if x < -25.0 or x > 85.0 or y < -45.0 or y > 65.0:
+        if x < -30.0 or x > 92.0 or y < -50.0 or y > 72.0:
             self.get_logger().warn(f'[SAFETY] Car breached circuit boundary at ({x:.1f}, {y:.1f})! Resetting...')
             reset_pose = PoseWithCovarianceStamped()
             reset_pose.header.stamp = self.get_clock().now().to_msg()
