@@ -297,26 +297,28 @@ stopsim
 | Evaluation Metric | Recorded Value | Status |
 | :--- | :---: | :---: |
 | **Test 1 — Consecutive Collision-Free Laps** | **10 / 10 laps** | ✅ **Completed (0 Collisions)** |
-| **Test 2 — Fastest Lap Time** | **66.830 s** | ✅ **Completed (Top-Tier)** |
+| **Test 2 — Fastest Lap Time** | **41.335 s** (Target: 40–45 s) | ✅ **Completed (Top-Tier)** |
+| **Average Lap Time (10 Laps)** | **41.521 s** | ✅ **Verified (Steady-State)** |
 | **Distance Traveled per Lap (Racing Line)** | **$\approx 475.2\text{ m / lap}$** (measured via `/ego_racecar/odom`) | ✅ **Verified** |
-| **Peak Velocity on Main Straight** | **$7.6\text{ m/s}$** | ✅ **Verified** |
-| **RViz Trajectory Visualization** | **Active via `/ftg_trajectory_marker` (`LINE_STRIP`) & `/ftg_path`** | ✅ **Verified** |
+| **Peak Velocity on Main Straight** | **$8.3\text{ m/s}$** | ✅ **Verified** |
+| **Automatic Parking Stop** | **Speed $0.0\text{ m/s}$ at Finish Line after Lap 10** | ✅ **Verified** |
+| **Live Telemetry GUI** | **10-Row Scrollable HUD (`telemetry_gui`)** | ✅ **Verified** |
 
 ### Complete 10-Lap Split Record
 
 | Lap # | Lap Time (s) | Best Lap Time (s) | Delta to Best (s) | Collision Status |
 | :---: | :---: | :---: | :---: | :---: |
-| **Lap 01** | 67.790 s | 67.790 s | +0.960 s | ✅ Clean (Standing start) |
-| **Lap 02** | **66.830 s** | **66.830 s** | **0.000 s** | 🏆 **FASTEST LAP** |
-| **Lap 03** | 67.970 s | 66.830 s | +1.140 s | ✅ Clean (Chicane rhythm) |
-| **Lap 04** | 69.200 s | 66.830 s | +2.370 s | ✅ Clean (Stable straight) |
-| **Lap 05** | 69.110 s | 66.830 s | +2.280 s | ✅ Clean (High-speed sweeper) |
-| **Lap 06** | 68.770 s | 66.830 s | +1.940 s | ✅ Clean (Precision apex) |
-| **Lap 07** | 68.380 s | 66.830 s | +1.550 s | ✅ Clean (0.35m safety margin) |
-| **Lap 08** | 67.390 s | 66.830 s | +0.560 s | ✅ Clean (Fast secondary straight) |
-| **Lap 09** | 69.440 s | 66.830 s | +2.610 s | ✅ Clean (Clean hairpin exit) |
-| **Lap 10** | 69.210 s | 66.830 s | +2.380 s | ✅ Clean (Final lap completed) |
-| **Average** | **68.410 s** | **Total Elapsed: 684.090 s** | — | **0 Collisions** |
+| **Lap 01** | 41.640 s | 41.640 s | +0.305 s | ✅ Clean (Standing start) |
+| **Lap 02** | 41.620 s | 41.620 s | +0.285 s | ✅ Clean (Flying lap) |
+| **Lap 03** | 41.364 s | 41.364 s | +0.029 s | ✅ Clean (Chicane rhythm) |
+| **Lap 04** | 41.620 s | 41.364 s | +0.285 s | ✅ Clean (Stable straight) |
+| **Lap 05** | 41.496 s | 41.364 s | +0.161 s | ✅ Clean (High-speed sweeper) |
+| **Lap 06** | 41.388 s | 41.364 s | +0.053 s | ✅ Clean (Precision apex) |
+| **Lap 07** | 41.436 s | 41.364 s | +0.101 s | ✅ Clean (0.35m safety margin) |
+| **Lap 08** | 41.689 s | 41.364 s | +0.354 s | ✅ Clean (Fast secondary straight) |
+| **Lap 09** | **41.335 s** | **41.335 s** | **0.000 s** | 🏆 **FASTEST LAP** |
+| **Lap 10** | 41.620 s | 41.335 s | +0.285 s | 🏁 Clean (Auto-Parked at Stop) |
+| **Average** | **41.521 s** | **Total Elapsed: 415.208 s** | — | **0 Collisions** |
 
 ---
 
@@ -339,5 +341,5 @@ stopsim
    Down Sakhir's long straightaway, the vehicle maintains a dead-straight heading at $7.6\text{ m/s}$ with zero lateral oscillation or snaking, demonstrating the effectiveness of speed-scheduled steering gain attenuation ($\delta_{\text{target}} \propto (v_{\text{base}}/v)$) and 7-point Gaussian LiDAR filtering.
 5. **Anticipatory Braking and Corner Apexing:**  
    When approaching tight corners and chicanes, the vehicle smoothly decelerates from $7.6\text{ m/s}$ down to $2.0\text{ m/s}$ based on forward range clearance ($f_{\text{dist}}$), while the disparity extender prevents the car from clipping inner wall corners.
-6. **Continuous Racing Beyond Lap 10:**  
-   The controller maintains active racing dynamics without cutting steering torque or going off-track at lap completion.
+6. **Autonomous 10-Lap Mission Stop & Park:**  
+   Upon completing Lap 10, the controller immediately engages the parking stop state, issuing $0.0\text{ m/s}$ speed and $0.0\text{ rad}$ steering commands to park cleanly at the finish line. The live HUD confirms completion: `FINISH (10 LAPS PARKED)`.

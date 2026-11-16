@@ -5,14 +5,14 @@
 **Group:** Group 2  
 **Assigned Track:** Sakhir  
 **Algorithm:** Enhanced Anti-Wobble Follow-The-Gap (FTG) with Speed-Scheduled Steering Gain & Anticipatory Braking  
-**Result:** 10 Consecutive Laps Completed | 0 Collisions | Fastest Lap: **66.83 s** | Multiplier: **×1.0**
+**Result:** 10 Consecutive Laps Completed | 0 Collisions | Fastest Lap: **41.34 s** (Target: 40–45 s) | Auto-Park at Lap 10
 
 ---
 
 ## 📌 Executive Summary for the Defense
 When presenting your project to the instructor, begin with this concise 1-minute overview:
 
-> *"For this competition on the Sakhir circuit, I developed an Enhanced Anti-Wobble Follow-the-Gap (FTG) reactive controller in ROS 2 Humble. Through lateral dynamics analysis, I resolved the classical FTG fishtailing problem by discovering that side walls at ±45° in narrow 2.2m corridors trigger artificial safety bubbles and relay gap-flipping. To eliminate it, I introduced Cartesian travel corridor hazard filtering (|y| <= 0.45m), forward-arc disparity extension (<= 20°), speed-scheduled steering gain attenuation, dynamic 75% corridor centering, and time-normalized slew rate limiting. To maximize lap performance safely, I engineered an anticipatory braking buffer that decelerates early before tight hairpins. The controller also features continuous lap racing so the vehicle never stops or leaves the track. The vehicle completed all 10 consecutive laps with 0 collisions and achieved a fastest lap time of 66.83 seconds."*
+> *"For this competition on the Sakhir circuit, I developed an Enhanced Anti-Wobble Follow-the-Gap (FTG) reactive controller in ROS 2 Humble. Through lateral dynamics analysis, I resolved the classical FTG fishtailing problem by discovering that side walls at ±45° in narrow 2.2m corridors trigger artificial safety bubbles and relay gap-flipping. To eliminate it, I introduced Cartesian travel corridor hazard filtering (|y| <= 0.45m), forward-arc disparity extension (<= 50°), speed-scheduled steering gain attenuation, dynamic corridor centering, and time-normalized slew rate limiting. To maximize lap performance safely and satisfy the 40–45 s lap target, I engineered an anticipatory braking buffer that decelerates early before tight hairpins while achieving 8.3 m/s on straights. The controller also features an autonomous 10-lap parking stop that brings the vehicle to a halt at the finish line. The vehicle completed all 10 consecutive laps with strictly 0 collisions and achieved a fastest lap time of 41.34 seconds."*
 
 ---
 
