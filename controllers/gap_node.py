@@ -130,6 +130,7 @@ class ReactiveFollowGap(Node):
         self.last_lap_distance = 0.0
         self.prev_pose = None
         self.all_laps_done = False
+        self.stop_timer = None
 
         # Real-time RViz Trajectory Line & Path Data
         self.last_traj_x = None
@@ -427,17 +428,35 @@ class ReactiveFollowGap(Node):
         drive_msg.drive.speed = speed
         self.drive_pub.publish(drive_msg)
 
+    def _publish_parking_brake(self):
+        """Actively hold vehicle parked at finish line (0.0 m/s, 0.0 rad)."""
+        stop_msg = AckermannDriveStamped()
+        stop_msg.header.stamp = self.get_clock().now().to_msg()
+        stop_msg.header.frame_id = 'base_link'
+        stop_msg.drive.steering_angle = 0.0
+        stop_msg.drive.speed = 0.0
+        self.drive_pub.publish(stop_msg)
+
     def odom_callback(self, msg):
         """
         Track position, detect finish line crossing on Sakhir,
         and update lap counts and timers.
         """
+        now_sec = self.get_clock().now().nanoseconds * 1e-9
+
+        # If 10 laps completed, lock vehicle in park and do not process further laps
+        if self.all_laps_done or self.completed_laps >= self.target_laps:
+            self.all_laps_done = True
+            self.current_speed = 0.0
+            self.current_steer = 0.0
+            self._publish_parking_brake()
+            self.publish_rviz_hud(now_sec)
+            return
+
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
         self.pose_x = x
         self.pose_y = y
-
-        now_sec = self.get_clock().now().nanoseconds * 1e-9
 
         # Initialize start times on first odometry message
         if self.sim_start_time is None:
@@ -517,13 +536,12 @@ class ReactiveFollowGap(Node):
             if self.completed_laps >= self.target_laps:
                 self.all_laps_done = True
                 self._print_final_summary()
-                # Publish immediate stop command to park vehicle at finish line
-                stop_msg = AckermannDriveStamped()
-                stop_msg.header.stamp = self.get_clock().now().to_msg()
-                stop_msg.header.frame_id = 'base_link'
-                stop_msg.drive.steering_angle = 0.0
-                stop_msg.drive.speed = 0.0
-                self.drive_pub.publish(stop_msg)
+                # Activate continuous parking brake timer (50 Hz stop publisher)
+                if self.stop_timer is None:
+                    self.stop_timer = self.create_timer(0.02, self._publish_parking_brake)
+                self._publish_parking_brake()
+                self.publish_rviz_hud(now_sec)
+                return
 
         self.prev_y = y
 

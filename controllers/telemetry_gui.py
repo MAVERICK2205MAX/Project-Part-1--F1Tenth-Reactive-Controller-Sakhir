@@ -57,13 +57,16 @@ class TelemetryGUI(Node):
         self.timer = self.create_timer(0.05, self.render_frame)
 
     def lap_count_cb(self, msg):
-        self.completed_laps = msg.data
+        self.completed_laps = min(int(msg.data), self.target_laps)
 
     def lap_time_cb(self, msg):
+        if len(self.lap_splits) >= self.target_laps:
+            return
         self.last_lap = msg.data
+        lap_idx = min(self.completed_laps, self.target_laps)
         # Avoid duplicate lap entries
-        if not any(lap_num == self.completed_laps for lap_num, _ in self.lap_splits):
-            self.lap_splits.append((self.completed_laps, msg.data))
+        if not any(lap_num == lap_idx for lap_num, _ in self.lap_splits):
+            self.lap_splits.append((lap_idx, msg.data))
         self.current_lap_start_time = time.time()
 
     def best_lap_cb(self, msg):
@@ -76,11 +79,17 @@ class TelemetryGUI(Node):
             self.current_lap_start_time = now
         vx = msg.twist.twist.linear.x
         vy = msg.twist.twist.linear.y
-        self.speed = np.hypot(vx, vy)
+        if self.completed_laps >= self.target_laps:
+            self.speed = 0.0
+        else:
+            self.speed = np.hypot(vx, vy)
         self.pose = (msg.pose.pose.position.x, msg.pose.pose.position.y)
 
     def drive_cb(self, msg):
-        self.steering = msg.drive.steering_angle
+        if self.completed_laps >= self.target_laps:
+            self.steering = 0.0
+        else:
+            self.steering = msg.drive.steering_angle
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse wheel scrolling and clicking on the scrollbar track."""
