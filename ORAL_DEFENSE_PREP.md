@@ -119,3 +119,12 @@ $$\text{Raw Scan} \longrightarrow \text{Forward FOV & Gauss Filter} \longrightar
     2. **Vehicle Floating HUD (`/car_hud`):** A text marker hovering $1.2\text{ m}$ directly above `ego_racecar/base_link` that follows the car continuously around Sakhir.
     3. **Live OpenCV Telemetry GUI:** A dedicated 620×520 HUD window with digital stopwatch, lap gauge, speedometer bar, and split history table.
     4. **Console Dashboard & CSV Log:** Real-time 1 Hz terminal telemetry and automatic recording to `sakhir_lap_records.csv`.
+
+---
+
+## 💾 ROS 2 Bag File Recording & Playback (`f1tenth_run_01`)
+* **Question: What is a ROS 2 bag file, and how did you record/replay your simulation?**
+  * **Answer:** A ROS 2 bag (`ros2 bag`) is a high-speed serialized database (SQLite3) that records all messages published across active topics with exact nanosecond timestamps.
+  * **Recording Command:** `ros2 bag record -a -o f1tenth_run_01` captures all topics (`/scan`, `/drive`, `/ego_racecar/odom`, `/tf`, `/tf_static`, `/car_hud`, `/lap_stats`, `/map`).
+  * **Inspection:** `ros2 bag info f1tenth_run_01` shows 49,463 messages across 35.3 MiB.
+  * **Playback Command:** `ros2 bag play f1tenth_run_01` or half-speed `ros2 bag play f1tenth_run_01 --rate 0.5` enables offline sensor replay and cornering analysis without running the live simulator.

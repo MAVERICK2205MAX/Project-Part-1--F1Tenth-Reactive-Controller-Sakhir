@@ -74,3 +74,16 @@ source install/setup.bash
 ros2 launch controllers competition_sakhir.launch.py
 ```
 *(Or simply run `runsim` in terminal)*.
+
+### 💾 ROS 2 Bag Replay Verification (`f1tenth_run_01`)
+A pre-recorded, verified ROS 2 bag is provided directly in `f1tenth_run_01/`:
+```bash
+# Inspect the recorded bag (49,463 messages, 35.3 MiB):
+ros2 bag info f1tenth_run_01
+
+# Replay at normal speed:
+ros2 bag play f1tenth_run_01
+
+# Replay at half speed (0.5x):
+ros2 bag play f1tenth_run_01 --rate 0.5
+```
