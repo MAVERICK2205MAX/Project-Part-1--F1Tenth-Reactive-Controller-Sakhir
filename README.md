@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/PYTHON-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![F1TENTH](https://img.shields.io/badge/F1TENTH-GYM_ROS-EE3124?style=for-the-badge)](https://github.com/f1tenth/f1tenth_gym_ros)
 [![VALIDATION](https://img.shields.io/badge/VALIDATION-10_COLLISION--FREE_LAPS-2E7D32?style=for-the-badge)](sakhir_lap_records.csv)
-[![ROS 2 Bag](https://img.shields.io/badge/ROSBAG-f1tenth__run__01-8A2BE2?style=for-the-badge&logo=ros)](f1tenth_run_01)
+[![ROS 2 Bag](https://img.shields.io/badge/ROS_2_Bag-f1tenth__run__01-8A2BE2?style=for-the-badge&logo=ros)](f1tenth_run_01)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 - **Driver & Lead Developer:** [ISLAM KAZI MAJHARUL](https://github.com/MAVERICK2205MAX) (Group 2)
@@ -12,7 +12,7 @@
 - **Course:** Autonomous Vehicles — II PAO 2026
 - **Assessment:** First Midterm Project (Part 1) — Reactive Controllers Competition
 - **Assigned Track:** Sakhir (Group 2)
-- **ROS 2 Bag Recording:** [`f1tenth_run_01/`](f1tenth_run_01) *(Official dataset: 49,463 messages)*
+- **ROS 2 Bag Recording:** [ROS 2 Bag](f1tenth_run_01) *(Official dataset: 49,463 messages)*
 - **Repository Visibility:** Public & Open Source for All Time ([MIT License](LICENSE))
 
 ---
