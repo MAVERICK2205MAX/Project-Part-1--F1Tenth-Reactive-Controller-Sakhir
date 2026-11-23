@@ -420,7 +420,7 @@ Key Topics Recorded:
 ```
 
 ### 4. Replaying the Recorded ROS Bag (`ros2 bag play`)
-You can replay the recorded simulation data:
+You can replay the recorded simulation data directly:
 
 ```bash
 ros2 bag play "ROS 2 Bag"
@@ -431,11 +431,35 @@ To replay the recording at **half speed (0.5x)** for detailed trajectory and cor
 ros2 bag play "ROS 2 Bag" --rate 0.5
 ```
 
-*(Interactive controls during playback: Press `Space` to Pause/Resume, `Right Arrow` for Next Message, `Up/Down` to adjust rate)*.
+To replay continuously in an **infinite loop** (ideal for telemetry monitoring or RViz inspection):
+```bash
+ros2 bag play "ROS 2 Bag" --loop
+```
 
-### 5. Automated Helper Scripts
+### 5. Interactive Playback Controls (Keyboard Shortcuts)
+While `ros2 bag play` is running in your terminal, use these keyboard controls:
+- **`Space`**: Pause / Resume playback at any moment.
+- **`Right Arrow` (`→`)**: Step forward frame-by-frame (1 message) while paused.
+- **`Up Arrow` / `Down Arrow` (`↑` / `↓`)**: Increase or decrease playback speed.
+- **`Ctrl + C`**: Stop playback cleanly.
+
+### 6. What to Do Next (Downstream Evaluation Workflows)
+Once the bag is replaying, evaluators and researchers can perform three primary workflows:
+1. **3D Visualization in RViz2 (No Simulator Needed!):**
+   - Start playback in Terminal 1: `ros2 bag play "ROS 2 Bag" --loop`
+   - Open RViz2 in Terminal 2: `rviz2`
+   - Add displays for `/scan` (LaserScan), `/map` (Map), `/tf` (TF), and `/ftg_target_marker` (Marker) to watch the car navigate Sakhir circuit in 3D.
+2. **Live Telemetry & Command Monitoring:**
+   - In another terminal, inspect actuator commands: `ros2 topic echo /drive`
+   - Inspect vehicle odometry and velocity: `ros2 topic echo /ego_racecar/odom`
+   - Inspect lap stats: `ros2 topic echo /lap_stats`
+3. **Offline Algorithm Benchmarking:**
+   - Run candidate controller nodes subscribing to `/scan` from the bag to benchmark new reactive algorithms offline without running the simulator.
+
+### 7. Automated Helper Scripts
 Dedicated executable scripts are provided in the `scripts/` directory:
 ```bash
-./scripts/record_bag.sh "ROS 2 Bag"   # Records all topics into "ROS 2 Bag"
-./scripts/play_bag.sh "ROS 2 Bag" 0.5 # Replays "ROS 2 Bag" at 0.5x speed
+./scripts/record_bag.sh "ROS 2 Bag"        # Records all topics into "ROS 2 Bag"
+./scripts/play_bag.sh "ROS 2 Bag" 0.5      # Replays "ROS 2 Bag" at 0.5x speed
+./scripts/play_bag.sh "ROS 2 Bag" 1.0 -l   # Replays in continuous loop
 ```
