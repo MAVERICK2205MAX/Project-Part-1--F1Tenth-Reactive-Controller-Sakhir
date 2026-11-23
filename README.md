@@ -462,4 +462,14 @@ Dedicated executable scripts are provided in the `scripts/` directory:
 ./scripts/record_bag.sh "ROS 2 Bag"        # Records all topics into "ROS 2 Bag"
 ./scripts/play_bag.sh "ROS 2 Bag" 0.5      # Replays "ROS 2 Bag" at 0.5x speed
 ./scripts/play_bag.sh "ROS 2 Bag" 1.0 -l   # Replays in continuous loop
+./scripts/export_bag_to_csv.py "ROS 2 Bag" # Exports bag to synchronized CSV spreadsheets
 ```
+
+### 8. CSV Telemetry Datasets (For Instant Evaluation Without ROS 2)
+For instructors and evaluators who want to inspect telemetry, plot curves, or grade results without launching ROS 2, human-readable CSV files are included directly in the [`ROS 2 Bag/`](ROS%202%20Bag) folder:
+- **[`f1tenth_telemetry_complete.csv`](ROS%202%20Bag/f1tenth_telemetry_complete.csv)** (**651 KB**, 4,459 rows): Master synchronized dataset containing time, positions $(x, y)$, heading yaw, linear/angular velocity, speed commands, steering angles, and LiDAR obstacle distance.
+- **[`drive_commands.csv`](ROS%202%20Bag/drive_commands.csv)** (**217 KB**, 4,462 rows): Pure time-series of actuator speed and steering commands.
+- **[`odometry_trajectory.csv`](ROS%202%20Bag/odometry_trajectory.csv)** (**291 KB**, 4,459 rows): Position coordinates and vehicle kinematics.
+- **[`sakhir_10_laps_summary.csv`](ROS%202%20Bag/sakhir_10_laps_summary.csv)**: 10-lap official benchmark record table.
+
+*These CSV files can be viewed directly on GitHub or opened immediately in Microsoft Excel, Google Sheets, MATLAB, or Pandas.*
