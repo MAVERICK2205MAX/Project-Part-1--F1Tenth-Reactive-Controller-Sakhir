@@ -1,4 +1,4 @@
-# 📦 ROS 2 Bag Recording: `f1tenth_run_01`
+# 📦 ROS 2 Bag Recording: `ROS 2 Bag`
 
 **Course:** Autonomous Vehicles — II PAO 2026  
 **Project:** Part 1 — Reactive Controller Competition (Sakhir Track)  
@@ -12,14 +12,14 @@
 
 This folder contains the complete serialized simulation dataset recorded with:
 ```bash
-ros2 bag record -a -o f1tenth_run_01
+ros2 bag record -a -o "ROS 2 Bag"
 ```
 
 It captures all LiDAR scans, vehicle commands, transforms, and telemetry messages with nanosecond timestamps.
 
 | Property | Value |
 | :--- | :--- |
-| **Directory Name** | `ROS 2 Bag/` (alias: `f1tenth_run_01/`) |
+| **Directory Name** | `ROS 2 Bag/` |
 | **Primary Database File** | `f1tenth_run_01_0.db3` (35.3 MiB) |
 | **Metadata File** | `metadata.yaml` |
 | **Duration** | **17.83 s** |
@@ -51,22 +51,22 @@ It captures all LiDAR scans, vehicle commands, transforms, and telemetry message
 
 ### 1. Inspect Bag Details (`ros2 bag info`)
 ```bash
-ros2 bag info f1tenth_run_01
+ros2 bag info "ROS 2 Bag"
 ```
 
 ### 2. Replay the Bag at Full Speed (`ros2 bag play`)
 ```bash
-ros2 bag play f1tenth_run_01
+ros2 bag play "ROS 2 Bag"
 ```
 
 ### 3. Replay at Half Speed (0.5x)
 ```bash
-ros2 bag play f1tenth_run_01 --rate 0.5
+ros2 bag play "ROS 2 Bag" --rate 0.5
 ```
 
 ### 4. Replay Using Helper Script
 ```bash
-./scripts/play_bag.sh f1tenth_run_01 0.5
+./scripts/play_bag.sh "ROS 2 Bag" 0.5
 ```
 
 *(Interactive playback controls: `Space` = Pause/Resume, `Right Arrow` = Step 1 message, `Up/Down` = Change rate)*.

@@ -3,10 +3,10 @@
 # F1Tenth Sakhir Autonomous Competition — ROS 2 Bag Player
 # Student: ISLAM KAZI MAJHARUL (Group 2)
 # Usage: ./scripts/play_bag.sh [bag_folder_name] [playback_rate]
-# Example: ./scripts/play_bag.sh f1tenth_run_01 0.5
+# Example: ./scripts/play_bag.sh "ROS 2 Bag" 0.5
 # ==============================================================================
 
-BAG_NAME="${1:-f1tenth_run_01}"
+BAG_NAME="${1:-ROS 2 Bag}"
 RATE="${2:-1.0}"
 
 source /opt/ros/humble/setup.bash

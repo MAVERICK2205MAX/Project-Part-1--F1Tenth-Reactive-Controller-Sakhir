@@ -29,7 +29,7 @@
 8. [Installation, Configuration, and Execution Instructions](#8-installation-configuration-and-execution-instructions)
 9. [Experimental Results, Lap Distance, and Video Evidence](#9-experimental-results-lap-distance-and-video-evidence)
 10. [Contributors and Project Authorship](#10-contributors-and-project-authorship)
-11. [ROS 2 Bag Recording and Playback (`f1tenth_run_01`)](#11-ros-2-bag-recording-and-playback-f1tenth_run_01)
+11. [ROS 2 Bag Recording and Playback (`ROS 2 Bag`)](#11-ros-2-bag-recording-and-playback-ros-2-bag)
 
 ---
 
@@ -368,14 +368,14 @@ This repository is configured as **Public** and released under the permissive [M
 
 ---
 
-## 11. ROS 2 Bag Recording and Playback (`f1tenth_run_01`)
+## 11. ROS 2 Bag Recording and Playback (`ROS 2 Bag`)
 
 As part of the evaluation criteria, simulation runs can be recorded into standard ROS 2 bag files capturing all published topics (`/scan`, `/drive`, `/ego_racecar/odom`, `/tf`, `/tf_static`, `/car_hud`, `/lap_stats`, `/map`).
 
-A pre-recorded, verified sample run has been captured and included in the repository in the [`f1tenth_run_01/`](f1tenth_run_01) directory.
+A pre-recorded, verified sample run has been captured and included in the repository in the [`ROS 2 Bag/`](ROS%202%20Bag) directory.
 
 ### 1. Recording a Run
-To start recording all simulation topics into an output folder named `f1tenth_run_01`:
+To start recording all simulation topics into an output folder named `ROS 2 Bag`:
 
 ```bash
 # In a terminal with ROS 2 environment sourced:
@@ -383,26 +383,26 @@ source /opt/ros/humble/setup.bash
 source ~/sim_ws/install/setup.bash
 export ROS_DOMAIN_ID=42
 
-ros2 bag record -a -o f1tenth_run_01
+ros2 bag record -a -o "ROS 2 Bag"
 ```
 
 * **Explanation:**
   - `ros2 bag record` — Starts the recording process.
   - `-a` — Records all available topics.
-  - `-o f1tenth_run_01` — Sets the destination output folder name.
+  - `-o "ROS 2 Bag"` — Sets the destination output folder name.
 
 ### 2. Stopping the Recording
 When the experiment or run is finished:
-Press **`Ctrl + C`** in the recording terminal. ROS 2 will cleanly close the database and save the metadata file inside `f1tenth_run_01/`.
+Press **`Ctrl + C`** in the recording terminal. ROS 2 will cleanly close the database and save the metadata file inside `ROS 2 Bag/`.
 
 ### 3. Inspecting the Recorded Data (`ros2 bag info`)
 To inspect the metadata, message count, duration, and topics of the recording:
 
 ```bash
-ros2 bag info f1tenth_run_01
+ros2 bag info "ROS 2 Bag"
 ```
 
-**Official Benchmark Bag Summary (`f1tenth_run_01`):**
+**Official Benchmark Bag Summary (`ROS 2 Bag`):**
 ```text
 Files:             f1tenth_run_01_0.db3
 Bag size:          35.3 MiB
@@ -423,12 +423,12 @@ Key Topics Recorded:
 You can replay the recorded simulation data:
 
 ```bash
-ros2 bag play f1tenth_run_01
+ros2 bag play "ROS 2 Bag"
 ```
 
 To replay the recording at **half speed (0.5x)** for detailed trajectory and cornering analysis:
 ```bash
-ros2 bag play f1tenth_run_01 --rate 0.5
+ros2 bag play "ROS 2 Bag" --rate 0.5
 ```
 
 *(Interactive controls during playback: Press `Space` to Pause/Resume, `Right Arrow` for Next Message, `Up/Down` to adjust rate)*.
@@ -436,6 +436,6 @@ ros2 bag play f1tenth_run_01 --rate 0.5
 ### 5. Automated Helper Scripts
 Dedicated executable scripts are provided in the `scripts/` directory:
 ```bash
-./scripts/record_bag.sh f1tenth_run_01   # Records all topics into f1tenth_run_01
-./scripts/play_bag.sh f1tenth_run_01 0.5 # Replays f1tenth_run_01 at 0.5x speed
+./scripts/record_bag.sh "ROS 2 Bag"   # Records all topics into "ROS 2 Bag"
+./scripts/play_bag.sh "ROS 2 Bag" 0.5 # Replays "ROS 2 Bag" at 0.5x speed
 ```

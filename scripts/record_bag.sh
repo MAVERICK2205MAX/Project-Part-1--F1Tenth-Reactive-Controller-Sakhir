@@ -5,7 +5,7 @@
 # Usage: ./scripts/record_bag.sh [bag_folder_name]
 # ==============================================================================
 
-BAG_NAME="${1:-f1tenth_run_01}"
+BAG_NAME="${1:-ROS 2 Bag}"
 
 source /opt/ros/humble/setup.bash
 source /home/admin1/sim_ws/install/setup.bash 2>/dev/null
