@@ -19,7 +19,7 @@ It captures all LiDAR scans, vehicle commands, transforms, and telemetry message
 
 | Property | Value |
 | :--- | :--- |
-| **Directory Name** | `f1tenth_run_01/` |
+| **Directory Name** | `ROS 2 Bag/` (alias: `f1tenth_run_01/`) |
 | **Primary Database File** | `f1tenth_run_01_0.db3` (35.3 MiB) |
 | **Metadata File** | `metadata.yaml` |
 | **Duration** | **17.83 s** |
