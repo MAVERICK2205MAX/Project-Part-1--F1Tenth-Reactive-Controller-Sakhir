@@ -5,6 +5,7 @@
 [![CSV Export](https://img.shields.io/badge/CSV_Datasets-Included-2ECC71?style=for-the-badge&logo=csv)]()
 [![Status](https://img.shields.io/badge/Status-Verified_&_Complete-2ECC71?style=for-the-badge)]()
 [![Messages](https://img.shields.io/badge/Messages-49,463-orange?style=for-the-badge)]()
+[![Video Demo](https://img.shields.io/badge/YouTube-Video_Demo-FF0000?style=for-the-badge&logo=youtube)](https://youtu.be/q9gYpvB2fs4)
 
 **Course:** Autonomous Vehicles — II PAO 2026  
 **Assessment:** First Midterm Project (Part 1) — Reactive Controllers Competition  
@@ -12,23 +13,34 @@
 **Group:** Group 2  
 **Assigned Track:** Sakhir International Circuit  
 **Contributor:** Winter Delgado (@widegonz)  
+**Video Demonstration:** 👉 [https://youtu.be/q9gYpvB2fs4](https://youtu.be/q9gYpvB2fs4)  
+
+---
+
+## 📺 Video Demonstration (ROS 2 Bag & Telemetry Replay)
+
+[![ROS 2 Bag Video Demonstration](https://img.youtube.com/vi/q9gYpvB2fs4/maxresdefault.jpg)](https://youtu.be/q9gYpvB2fs4)
+
+> 🔗 **Direct URL:** [https://youtu.be/q9gYpvB2fs4](https://youtu.be/q9gYpvB2fs4)  
+> ⏱️ **Content:** Demonstrates live recording of `/scan`, `/ego_racecar/odom`, and `/drive` on the clean Sakhir Circuit, verifying metadata via `ros2 bag info`, interactive half-speed playback (`--rate 0.5`) with keyboard callbacks (`Spacebar` pause/resume), and navigating exported CSV telemetry datasets.
 
 ---
 
 ## 📑 Table of Contents
-1. [Directory Contents & Files Overview](#-directory-contents--files-overview)
-2. [Why CSV Datasets Are Helpful for Instructors](#-why-csv-datasets-are-helpful-for-instructors)
-3. [CSV File Structure & Data Columns](#-csv-file-structure--data-columns)
-4. [Recorded ROS 2 Bag Topic Breakdown](#-recorded-ros-2-bag-topic-breakdown)
-5. [How to Run the Bag File (Step-by-Step)](#-how-to-run-the-bag-file-step-by-step)
-6. [How to Handle Playback (Interactive Keyboard Controls)](#-how-to-handle-playback-interactive-keyboard-controls)
-7. [What to Do Next (Evaluation, Telemetry & Visualization Workflows)](#-what-to-do-next-evaluation-telemetry--visualization-workflows)
+1. [Video Demonstration](#-video-demonstration-ros-2-bag--telemetry-replay)
+2. [Directory Contents & Files Overview](#-directory-contents--files-overview)
+3. [Why CSV Datasets Are Helpful for Instructors](#-why-csv-datasets-are-helpful-for-instructors)
+4. [CSV File Structure & Data Columns](#-csv-file-structure--data-columns)
+5. [Recorded ROS 2 Bag Topic Breakdown](#-recorded-ros-2-bag-topic-breakdown)
+6. [How to Run the Bag File (Step-by-Step)](#-how-to-run-the-bag-file-step-by-step)
+7. [How to Handle Playback (Interactive Keyboard Controls)](#-how-to-handle-playback-interactive-keyboard-controls)
+8. [What to Do Next (Evaluation, Telemetry & Visualization Workflows)](#-what-to-do-next-evaluation-telemetry--visualization-workflows)
    - [Workflow 1: Instant CSV Analysis in Excel / Sheets / Python (No ROS 2 needed)](#workflow-1-instant-csv-analysis-in-excel--sheets--python-no-ros-2-needed)
    - [Workflow 2: 3D Visualization in RViz2](#workflow-2-3d-visualization-in-rviz2-without-physics-simulation)
    - [Workflow 3: Live Telemetry & Command Monitoring](#workflow-3-live-telemetry--command-monitoring-terminal-2)
    - [Workflow 4: Offline Algorithm Testing & Validation](#workflow-4-offline-algorithm-testing--validation)
-8. [Automated Helper Scripts](#-automated-helper-scripts)
-9. [Oral Defense Summary for Instructors](#-oral-defense-summary-for-instructors)
+9. [Automated Helper Scripts](#-automated-helper-scripts)
+10. [Oral Defense Summary for Instructors](#-oral-defense-summary-for-instructors)
 
 ---
 
